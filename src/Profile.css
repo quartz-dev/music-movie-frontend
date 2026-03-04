@@ -1,0 +1,477 @@
+/* Profil sayfası stilleri */
+.profile-container {
+    min-height: 100vh;
+    width: 100%;
+    background-color: #202124;
+    padding: 20px;
+    position: relative; /* Position context için */
+}
+
+.profile-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-right-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: absolute; /* Kutu sınırlarını yoksayar */
+    top: 20px;
+    right: 20px; /* Ekranın sağından 20px boşluk bırakır */
+    z-index: 100; /* Diğer elemanların altında kalmasını önler */
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #303134;
+    border: none;
+    color: #8ab4f8;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.back-btn:hover {
+    background-color: #3c4043;
+}
+
+.settings-link-btn {
+    padding: 10px 20px;
+    background-color: transparent;
+    border: 1px solid #5f6368;
+    color: #e8eaed;
+    border-radius: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.settings-link-btn:hover {
+    background-color: #3c4043;
+    border-color: #8ab4f8;
+}
+
+/* Profil Menü Wrapper */
+.profile-menu-wrapper {
+    position: relative;
+}
+
+/* Profil Butonu - Google tarzı yuvarlak */
+.profile-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #8ab4f8;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    color: #202124;
+}
+
+.profile-button:hover {
+    background-color: #aecbfa;
+    transform: scale(1.05);
+}
+
+.profile-button:active {
+    transform: scale(0.95);
+}
+
+/* Dropdown Menü */
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background-color: #303134;
+    border: 1px solid #5f6368;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: slideDown 0.2s ease-out;
+    z-index: 1000;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: #e8eaed;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background-color: #3c4043;
+}
+
+.dropdown-item svg {
+    color: #9aa0a6;
+    flex-shrink: 0;
+}
+
+.profile-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.profile-card {
+    background-color: #303134;
+    border: 1px solid #5f6368;
+    border-radius: 16px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: #8ab4f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #202124;
+}
+
+.profile-title {
+    color: #e8eaed;
+    font-size: 28px;
+    font-weight: 400;
+    margin: 0;
+}
+
+/* İstatistikler */
+.profile-stats {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 20px 0;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 500;
+    color: #8ab4f8;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #9aa0a6;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 40px;
+    background-color: #5f6368;
+}
+
+.profile-info {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 0;
+    border-top: 1px solid #5f6368;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    color: #9aa0a6;
+}
+
+.info-item svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.info-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #9aa0a6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 16px;
+    color: #e8eaed;
+}
+
+/* Profil Bölümleri */
+.profile-section {
+    background-color: #303134;
+    border: 1px solid #5f6368;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.section-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #5f6368;
+}
+
+.section-title {
+    color: #e8eaed;
+    font-size: 20px;
+    font-weight: 500;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-title svg {
+    color: #8ab4f8;
+}
+
+/* Film Kartları Grid */
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.movie-card {
+    background-color: #202124;
+    border: 1px solid #3c4043;
+    border-radius: 12px;
+    padding: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.movie-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: #8ab4f8;
+}
+
+.movie-poster-placeholder {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background-color: #3c4043;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    color: #5f6368;
+}
+
+.movie-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.movie-title {
+    color: #e8eaed;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.movie-year {
+    color: #9aa0a6;
+    font-size: 14px;
+    margin: 0;
+}
+
+.movie-search-date {
+    color: #5f6368;
+    font-size: 12px;
+    margin: 0;
+    font-style: italic;
+}
+
+/* Playlist Listesi */
+.playlists-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.playlist-card {
+    background-color: #202124;
+    border: 1px solid #3c4043;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.playlist-card:hover {
+    background-color: #292a2d;
+    border-color: #8ab4f8;
+}
+
+.playlist-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #8ab4f8 0%, #aecbfa 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #202124;
+    flex-shrink: 0;
+}
+
+.playlist-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.playlist-name {
+    color: #e8eaed;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.playlist-source {
+    color: #9aa0a6;
+    font-size: 13px;
+    margin: 0;
+    font-style: italic;
+}
+
+.playlist-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #5f6368;
+    font-size: 12px;
+}
+
+.meta-dot {
+    color: #5f6368;
+}
+
+.playlist-play-btn {
+    padding: 8px 24px;
+    background-color: #8ab4f8;
+    color: #202124;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    flex-shrink: 0;
+}
+
+.playlist-play-btn:hover {
+    background-color: #aecbfa;
+    transform: scale(1.05);
+}
+
+.playlist-play-btn:active {
+    transform: scale(0.95);
+}
+
+.profile-note {
+    color: #9aa0a6;
+    font-size: 14px;
+    text-align: center;
+    line-height: 1.6;
+    margin: 32px 0 0 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .profile-card {
+        padding: 30px 20px;
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+    }
+
+    .profile-title {
+        font-size: 24px;
+    }
+
+    .profile-stats {
+        gap: 20px;
+    }
+
+    .stat-number {
+        font-size: 24px;
+    }
+
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .playlist-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .playlist-play-btn {
+        width: 100%;
+    }
+}

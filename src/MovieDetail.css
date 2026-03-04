@@ -1,0 +1,315 @@
+/* Movie Detail Page - Mood & Music Recommendations */
+.movie-detail-container {
+    min-height: 100vh;
+    width: 100%;
+    background-color: #202124;
+    padding: 40px 60px;
+}
+
+/* Back Button */
+.back-button-detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #303134;
+    border: none;
+    color: #8ab4f8;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 30px;
+}
+
+.back-button-detail:hover {
+    background-color: #3c4043;
+}
+
+/* Main Title */
+.page-main-title {
+    color: #e8eaed;
+    font-size: 36px;
+    font-weight: 400;
+    text-align: center;
+    margin: 0 0 50px 0;
+}
+
+/* Movie and Mood Section */
+.movie-mood-section {
+    display: flex;
+    gap: 40px;
+    max-width: 1400px;
+    margin: 0 auto 60px auto;
+    align-items: flex-start;
+}
+
+/* Movie Poster */
+.movie-poster-large {
+    flex-shrink: 0;
+    width: 400px;
+}
+
+.poster-placeholder {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: linear-gradient(135deg, #303134 0%, #3c4043 100%);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.poster-placeholder svg {
+    color: #8ab4f8;
+}
+
+.poster-movie-title {
+    color: #e8eaed;
+    font-size: 28px;
+    font-weight: 500;
+    text-align: center;
+    margin: 0;
+}
+
+.poster-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+.album-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* Loading and Error Messages */
+.loading-message,
+.error-message {
+    text-align: center;
+    padding: 100px 20px;
+    color: #9aa0a6;
+    font-size: 18px;
+}
+
+.error-message {
+    color: #f28b82;
+}
+
+/* Mood Analysis Box */
+.mood-analysis-box {
+    flex: 1;
+    background-color: #303134;
+    border: 1px solid #5f6368;
+    border-radius: 16px;
+    padding: 32px;
+    min-height: 300px;
+}
+
+.mood-analysis-title {
+    color: #e8eaed;
+    font-size: 28px;
+    font-weight: 500;
+    margin: 0 0 30px 0;
+}
+
+/* Mood Tags */
+.mood-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.mood-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #3c4043;
+    border: 1px solid #5f6368;
+    border-radius: 20px;
+    padding: 10px 18px;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.mood-tag:hover {
+    background-color: #484a4d;
+    transform: translateY(-2px);
+}
+
+.mood-tag-text {
+    color: #e8eaed;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.mood-tag-emoji {
+    font-size: 20px;
+}
+
+/* Recommendations Title */
+.recommendations-title {
+    color: #e8eaed;
+    font-size: 32px;
+    font-weight: 400;
+    text-align: center;
+    margin: 0 0 40px 0;
+}
+
+/* Songs Grid */
+.songs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Song Card */
+.song-card {
+    background-color: #303134;
+    border: 1px solid #5f6368;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.song-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: #8ab4f8;
+}
+
+/* Album Cover */
+.album-cover {
+    width: 100%;
+    aspect-ratio: 1/1;
+    background-color: #202124;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.album-placeholder-icon {
+    color: #5f6368;
+}
+
+/* Song Info */
+.song-info {
+    flex: 1;
+}
+
+.song-number {
+    color: #e8eaed;
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0 0 8px 0;
+}
+
+.song-artist {
+    color: #9aa0a6;
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Action Buttons */
+.song-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.play-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background-color: #8ab4f8;
+    color: #202124;
+    border: none;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.play-button:hover {
+    background-color: #aecbfa;
+    transform: scale(1.02);
+}
+
+.spotify-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background-color: #1DB954;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.spotify-button:hover {
+    background-color: #1ed760;
+    transform: scale(1.02);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .movie-mood-section {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .movie-poster-large {
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .page-main-title {
+        font-size: 28px;
+    }
+
+    .recommendations-title {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .movie-detail-container {
+        padding: 20px;
+    }
+
+    .page-main-title {
+        font-size: 24px;
+        margin-bottom: 30px;
+    }
+
+    .mood-analysis-title {
+        font-size: 22px;
+    }
+
+    .songs-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,276 @@
+/* Ana sayfa container - Tam ekran ve ortalanmış */
+.dark-container {
+    width: 100%;
+    min-height: 100vh;
+    background-color: #202124;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+/* Navigation Bar */
+.home-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background-color: #202124;
+    border-bottom: 1px solid #3c4043;
+    z-index: 1000;
+    padding: 12px 0;
+}
+
+.navbar-content {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Butonlar arası boşluk */
+}
+
+/* Sol taraftaki Profile butonu */
+.profile-nav-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: transparent;
+    border: 1px solid #5f6368;
+    border-radius: 20px;
+    color: #e8eaed;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.profile-nav-button:hover {
+    background-color: #3c4043;
+    border-color: #8ab4f8;
+}
+
+.profile-nav-button svg {
+    color: #8ab4f8;
+}
+
+/* Diğer navigasyon butonları */
+.nav-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: transparent;
+    border: 1px solid #5f6368;
+    border-radius: 20px;
+    color: #e8eaed;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.nav-button:hover {
+    background-color: #3c4043;
+    border-color: #8ab4f8;
+    transform: translateY(-2px);
+}
+
+.nav-button svg {
+    color: #8ab4f8;
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-right: 20px; /* Profil butonunu daha sağa kaydır */
+}
+
+/* Auth Navigation Buttons */
+.auth-nav-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: transparent;
+    border: 1px solid #5f6368;
+    border-radius: 20px;
+    color: #e8eaed;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.auth-nav-button:hover {
+    background-color: #3c4043;
+    border-color: #8ab4f8;
+    transform: translateY(-2px);
+}
+
+.auth-nav-button svg {
+    color: #8ab4f8;
+}
+
+.auth-nav-button.register-btn {
+    background-color: #8ab4f8;
+    color: #202124;
+    border-color: #8ab4f8;
+}
+
+.auth-nav-button.register-btn svg {
+    color: #202124;
+}
+
+.auth-nav-button.register-btn:hover {
+    background-color: #aecbfa;
+    border-color: #aecbfa;
+}
+
+/* Profil Menü Wrapper */
+.profile-menu-wrapper {
+    position: relative;
+}
+
+/* Profil Butonu - Google tarzı yuvarlak */
+.profile-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #8ab4f8;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    color: #202124;
+}
+
+.profile-button:hover {
+    background-color: #aecbfa;
+    transform: scale(1.05);
+}
+
+.profile-button:active {
+    transform: scale(0.95);
+}
+
+/* Dropdown Menü */
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background-color: #303134;
+    border: 1px solid #5f6368;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: #e8eaed;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background-color: #3c4043;
+}
+
+.dropdown-item svg {
+    color: #9aa0a6;
+    flex-shrink: 0;
+}
+
+/* Arama çubuğunun ana kutusu */
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    width: 60vw;
+    max-width: 584px;
+    height: 46px;
+    background-color: #303134; /* Koyu mod arama kutusu rengi */
+    border: 0px solid #5f6368;
+    border-radius: 24px;
+    padding: 0 14px 0 14px;
+    margin-top: 25vh;
+    transition: box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+    /* Hover (üzerine gelince) ve Focus (içine tıklayınca) efektleri */
+    .search-wrapper:hover,
+    .search-wrapper:focus-within {
+        background-color: #303134;
+        box-shadow: 0px 2px 12px rgba(23, 23, 23, 0.9);
+        border-color: rgba(223, 225, 229, 0);
+    }
+
+/* İkon ve input tasarımları */
+.search-icon {
+    color: #9aa0a6;
+    margin-right: 12px;
+}
+
+.search-input {
+    flex: 1;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e8eaed; /* Koyu mod beyaz metin rengi */
+    font-size: 16px;
+}
+
+    .search-input::placeholder {
+        color: #9aa0a6;
+        text-align: center;
+    }
+
+.action-icon {
+    color: #8ab4f8; /* Google koyu mod mavi ikon rengi */
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+    .action-icon:hover {
+        opacity: 0.8;
+    }
+
+.search-icon:hover {
+    color: #8ab4f8; /* Google koyu mod mavi ikon rengi */
+    cursor: pointer;
+    transition: opacity 0.2s;
+    opacity: 0.8;
+}
+
+

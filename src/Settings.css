@@ -1,0 +1,222 @@
+/* Ayarlar sayfası stilleri */
+.settings-container {
+    min-height: 100vh;
+    width: 100%;
+    background-color: #202124;
+    padding: 20px;
+}
+
+.settings-header {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #303134;
+    border: none;
+    color: #8ab4f8;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.back-btn:hover {
+    background-color: #3c4043;
+}
+
+/* Profil Menü Wrapper */
+.profile-menu-wrapper {
+    position: relative;
+}
+
+/* Profil Butonu - Google tarzı yuvarlak */
+.profile-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #8ab4f8;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    color: #202124;
+}
+
+.profile-button:hover {
+    background-color: #aecbfa;
+    transform: scale(1.05);
+}
+
+.profile-button:active {
+    transform: scale(0.95);
+}
+
+/* Dropdown Menü */
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background-color: #303134;
+    border: 1px solid #5f6368;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: slideDown 0.2s ease-out;
+    z-index: 1000;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: #e8eaed;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background-color: #3c4043;
+}
+
+.dropdown-item svg {
+    color: #9aa0a6;
+    flex-shrink: 0;
+}
+
+.settings-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.settings-title {
+    color: #e8eaed;
+    font-size: 32px;
+    font-weight: 400;
+    margin-bottom: 32px;
+}
+
+.settings-section {
+    background-color: #303134;
+    border: 1px solid #5f6368;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.section-title {
+    color: #e8eaed;
+    font-size: 20px;
+    font-weight: 500;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #5f6368;
+}
+
+.settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #3c4043;
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.settings-item-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    flex: 1;
+}
+
+.settings-icon {
+    color: #8ab4f8;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.settings-item-title {
+    color: #e8eaed;
+    font-size: 16px;
+    font-weight: 400;
+    margin: 0 0 4px 0;
+}
+
+.settings-item-desc {
+    color: #9aa0a6;
+    font-size: 14px;
+    margin: 0;
+}
+
+.settings-btn {
+    background-color: #8ab4f8;
+    color: #202124;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+
+.settings-btn:hover {
+    background-color: #aecbfa;
+}
+
+.settings-note {
+    color: #9aa0a6;
+    font-size: 14px;
+    text-align: center;
+    line-height: 1.6;
+    margin: 32px 0 0 0;
+}
+
+@media (max-width: 768px) {
+    .settings-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .settings-btn {
+        width: 100%;
+    }
+    
+    .settings-title {
+        font-size: 28px;
+    }
+}
