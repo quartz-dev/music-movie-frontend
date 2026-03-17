@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronDown, Plus, Search, Play } from 'lucide-react';
+import { Check, ChevronDown, Plus, Search } from 'lucide-react';
 import './Playlists.css';
 
 function Playlists() {
@@ -252,7 +252,16 @@ function Playlists() {
 
       <div className="library-grid">
         {sortedPlaylists.map((p) => (
-          <div key={p.id} className="library-card">
+          <div
+            key={p.id}
+            className="library-card"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/playlists/${p.id}`)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') navigate(`/playlists/${p.id}`);
+            }}
+          >
             <div className="library-cover">
               {p.coverType === 'liked' ? (
                 <div
@@ -271,9 +280,6 @@ function Playlists() {
                 <img src={p.coverUrl} alt="" />
               )}
 
-              <div className="library-play-overlay" aria-hidden="true">
-                <Play size={18} />
-              </div>
             </div>
 
             <div className="library-card-title">{p.name}</div>

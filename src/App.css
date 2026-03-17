@@ -918,21 +918,7 @@
 }
 
 .pl-play {
-    margin-left: auto;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    font-size: 14px;
-    color: #07110b;
-    background: var(--accent-2);
-    box-shadow: 0 18px 50px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.10);
-    transform: translateZ(28px);
-}
-
-.featured-card:hover .pl-play {
-    filter: brightness(1.02);
+    display: none;
 }
 
 .pl-preview {

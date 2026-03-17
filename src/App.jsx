@@ -9,6 +9,7 @@ import Settings from './Settings';
 import Popular from './Popular';
 import Categories from './Categories';
 import Playlists from './Playlists';
+import PlaylistDetail from './PlaylistDetail';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './App.css';
@@ -29,6 +30,7 @@ function App() {
             <Route path="/popular" element={<Popular />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/playlists" element={<Playlists />} />
+            <Route path="/playlists/:playlistId" element={<PlaylistDetail />} />
           </Routes>
         </AuthProvider>
       </ThemeProvider>
