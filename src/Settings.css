@@ -86,22 +86,10 @@
     border-radius: 16px;
     box-shadow: var(--shadow-md);
     overflow: hidden;
-    animation: slideDown 0.2s ease-out;
     z-index: 1000;
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     transform-origin: top right;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .dropdown-item {

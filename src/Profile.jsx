@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Calendar, Film, Music, Clock, Sparkles, Settings } from 'lucide-react';
+import { CSSTransition } from 'react-transition-group';
 import { useAuth } from './context/AuthContext';
 import './Profile.css';
 
@@ -91,9 +92,14 @@ function Profile() {
             </button>
 
             {/* Dropdown Menü */}
-            {showProfileMenu && (
+            <CSSTransition
+              in={showProfileMenu}
+              timeout={180}
+              classNames="menu"
+              unmountOnExit
+            >
               <div className="profile-dropdown">
-                <button 
+                <button
                   className="dropdown-item"
                   onClick={() => {
                     setShowProfileMenu(false);
@@ -103,7 +109,7 @@ function Profile() {
                   <User size={18} />
                   <span>Profilim</span>
                 </button>
-                <button 
+                <button
                   className="dropdown-item"
                   onClick={handleSettingsNavigate}
                 >
@@ -111,7 +117,7 @@ function Profile() {
                   <span>Ayarlar</span>
                 </button>
               </div>
-            )}
+            </CSSTransition>
           </div>
         </div>
       </div>

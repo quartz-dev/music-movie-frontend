@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Film, User, Settings } from 'lucide-react';
+import { CSSTransition } from 'react-transition-group';
 import api from './services/api';
 import './MovieResults.css';
 
@@ -67,39 +68,61 @@ function MovieResults() {
     <div className="results-container">
       <header className="results-header">
         <div className="results-header-inner">
-          <button type="button" className="results-logo" onClick={handleLogoClick}>
-            <Film size={18} />
-            <span>MovieSearch</span>
-          </button>
-
-          <form className="results-search" onSubmit={handleSearch}>
-            <Search size={18} className="results-search-icon" />
-            <input
-              type="text"
-              className="results-search-input"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search movies"
-            />
-          </form>
-
-          <div className="profile-menu-wrapper">
-            <button className="profile-button" onClick={handleProfileClick} aria-label="Profil menüsü">
-              <User size={20} />
+          <div className="results-header-left">
+            <button type="button" className="results-logo" onClick={handleLogoClick}>
+              <Film size={18} />
+              <span>MovieSearch</span>
             </button>
+          </div>
 
-            {showProfileMenu && (
-              <div className="profile-dropdown">
-                <button className="dropdown-item" onClick={handleProfileNavigate}>
-                  <User size={18} />
-                  <span>Profilim</span>
-                </button>
-                <button className="dropdown-item" onClick={handleSettingsNavigate}>
-                  <Settings size={18} />
-                  <span>Ayarlar</span>
-                </button>
-              </div>
-            )}
+          <div className="results-header-center">
+            <form className="search-wrapper results-navbar-search" onSubmit={handleSearch}>
+              <input
+                type="text"
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for a movie..."
+              />
+              <Search
+                size={20}
+                className="search-icon search-icon-right"
+                role="button"
+                aria-label="Search"
+                title="Search"
+                onClick={() => {
+                  if (searchQuery.trim() && searchQuery.trim() !== movieName) {
+                    navigate(`/movie/${encodeURIComponent(searchQuery.trim())}`);
+                  }
+                }}
+              />
+            </form>
+          </div>
+
+          <div className="results-header-right">
+            <div className="profile-menu-wrapper">
+              <button className="profile-button" onClick={handleProfileClick} aria-label="Profil menüsü">
+                <User size={20} />
+              </button>
+
+              <CSSTransition
+                in={showProfileMenu}
+                timeout={180}
+                classNames="menu"
+                unmountOnExit
+              >
+                <div className="profile-dropdown">
+                  <button className="dropdown-item" onClick={handleProfileNavigate}>
+                    <User size={18} />
+                    <span>Profilim</span>
+                  </button>
+                  <button className="dropdown-item" onClick={handleSettingsNavigate}>
+                    <Settings size={18} />
+                    <span>Ayarlar</span>
+                  </button>
+                </div>
+              </CSSTransition>
+            </div>
           </div>
         </div>
       </header>
