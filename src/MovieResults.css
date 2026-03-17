@@ -1,228 +1,136 @@
 /* Film sonuçları sayfası - Masaüstü Web Tasarımı */
 .results-container {
     min-height: 100vh;
-    background-color: #202124;
+    background: radial-gradient(1200px 600px at 50% -10%, rgba(0, 113, 227, 0.10), transparent 60%), var(--bg);
 }
 
 /* Header - Google tarzı üst bar */
 .results-header {
-    background-color: #202124;
-    border-bottom: 1px solid #3c4043;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
     padding: 12px 0;
     position: sticky;
     top: 0;
     z-index: 100;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
 }
 
-.header-content {
+.results-header-inner {
     display: flex;
     align-items: center;
-    max-width: 1440px;
+    justify-content: space-between;
+    max-width: var(--container);
     margin: 0 auto;
-    padding: 0 20px;
-    gap: 30px;
+    padding: 0 var(--pad-x);
+    gap: 14px;
 }
 
-/* Logo bölümü */
-.logo-section {
-    display: flex;
+.results-logo {
+    display: inline-flex;
     align-items: center;
     gap: 10px;
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    color: var(--text);
     cursor: pointer;
-    transition: opacity 0.2s;
-    min-width: 200px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    white-space: nowrap;
 }
 
-.logo-section:hover {
-    opacity: 0.8;
+.results-logo:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
-.logo-icon {
-    color: #8ab4f8;
-}
-
-.logo-text {
-    color: #e8eaed;
-    font-size: 20px;
-    font-weight: 500;
-}
-
-/* Üst arama çubuğu */
-.search-bar {
+.results-search {
     display: flex;
     align-items: center;
     flex: 1;
-    max-width: 700px;
+    max-width: 640px;
     height: 44px;
-    background-color: #303134;
-    border: 1px solid #5f6368;
-    border-radius: 24px;
-    padding: 0 16px;
-    transition: box-shadow 0.2s, background-color 0.2s;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0 14px;
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
-.search-bar:hover,
-.search-bar:focus-within {
-    background-color: #303134;
-    box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
-    border-color: rgba(223, 225, 229, 0);
+.results-search:focus-within,
+.results-search:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
-.search-bar-icon {
-    color: #9aa0a6;
-    margin-right: 12px;
+.results-search-icon {
+    color: var(--muted);
+    margin-right: 10px;
     flex-shrink: 0;
 }
 
-.search-bar-input {
+.results-search-input {
     flex: 1;
     height: 100%;
     background: transparent;
     border: none;
     outline: none;
-    color: #e8eaed;
+    color: var(--text);
     font-size: 16px;
 }
 
-.search-bar-input::placeholder {
-    color: #9aa0a6;
-}
-
-.header-spacer {
-    min-width: 200px;
-}
-
-/* Header'daki Profil Butonu Wrapper */
-.header-profile-wrapper {
-    display: flex;
-    align-items: center;
-    padding-left: 24px;
-}
-
-/* Profil Menü Wrapper */
-.profile-menu-wrapper {
-    position: relative;
-}
-
-/* Profil Butonu - Google tarzı yuvarlak */
-.profile-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #8ab4f8;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-    color: #202124;
-}
-
-.profile-button:hover {
-    background-color: #aecbfa;
-    transform: scale(1.05);
-}
-
-.profile-button:active {
-    transform: scale(0.95);
-}
-
-/* Dropdown Menü */
-.profile-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    min-width: 200px;
-    background-color: #303134;
-    border: 1px solid #5f6368;
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-    animation: slideDown 0.2s ease-out;
-    z-index: 1000;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.dropdown-item {
-    width: 100%;
-    padding: 12px 16px;
-    background: none;
-    border: none;
-    color: #e8eaed;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    text-align: left;
-}
-
-.dropdown-item:hover {
-    background-color: #3c4043;
-}
-
-.dropdown-item svg {
-    color: #9aa0a6;
-    flex-shrink: 0;
+.results-search-input::placeholder {
+    color: rgba(29, 29, 31, 0.45);
 }
 
 /* Ana içerik alanı */
 .results-main {
-    max-width: 1000px;
+    max-width: var(--container);
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 34px var(--pad-x) 60px;
 }
 
-/* Sonuç bilgisi */
-.results-info {
-    padding: 20px 0 10px 0;
-    border-bottom: 1px solid #3c4043;
+.results-hero {
+    text-align: center;
+    margin: 12px 0 28px;
 }
 
-.results-count {
-    color: #9aa0a6;
-    font-size: 14px;
-    margin: 0;
+.results-kicker {
+    margin: 0 0 10px;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
 }
 
-/* Sonuç içeriği */
-.results-content {
-    padding: 20px 0;
+.results-title {
+    margin: 0 0 10px;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.results-subtitle {
+    margin: 0 auto;
+    max-width: 70ch;
+    color: var(--muted);
 }
 
 /* Loading, Error, No Results */
-.loading-message,
-.error-message,
-.no-results {
+.results-state {
     text-align: center;
     padding: 60px 20px;
 }
 
-.loading-message p {
-    color: #9aa0a6;
-    font-size: 18px;
-}
-
-.error-message p {
-    color: #f28b82;
-    font-size: 18px;
-}
-
-.no-results p {
-    color: #9aa0a6;
-    font-size: 18px;
+.results-state p {
+    color: var(--muted);
+    font-size: 16px;
+    margin: 0;
 }
 
 /* Poster image */

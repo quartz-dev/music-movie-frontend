@@ -3,11 +3,188 @@
 }
 
 body {
-    background-color: #202124;
-    color: #ffffff;
+    background-color: var(--bg);
+    color: var(--text);
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+    overflow-x: hidden;
+}
+
+:root {
+    --bg: #07070b;
+    --surface: rgba(20, 20, 26, 0.62);
+    --surface-solid: #121218;
+    --border: rgba(255, 255, 255, 0.10);
+    --text: rgba(255, 255, 255, 0.92);
+    --muted: rgba(255, 255, 255, 0.66);
+    --accent: #ff2d55;
+    --accent-hover: #ff4d6d;
+    --accent-2: #22ff95;
+    --accent-2-hover: #5cffb5;
+    --ring: rgba(255, 45, 85, 0.45);
+    --shadow-sm: 0 10px 26px rgba(0, 0, 0, 0.30);
+    --shadow-md: 0 22px 70px rgba(0, 0, 0, 0.55);
+    --radius-sm: 12px;
+    --radius-md: 18px;
+    --radius-lg: 26px;
+    --container: 1160px;
+    --pad-x: 24px;
+    --glow-1: 0 0 0 1px rgba(255, 45, 85, 0.22), 0 0 46px rgba(255, 45, 85, 0.16);
+    --glow-2: 0 0 0 1px rgba(34, 255, 149, 0.20), 0 0 46px rgba(34, 255, 149, 0.14);
+}
+
+:root[data-theme='dark'] {
+    --bg: #07070b;
+    --surface: rgba(20, 20, 26, 0.62);
+    --surface-solid: #121218;
+    --border: rgba(255, 255, 255, 0.10);
+    --text: rgba(255, 255, 255, 0.92);
+    --muted: rgba(255, 255, 255, 0.66);
+    --accent: #ff2d55;
+    --accent-hover: #ff4d6d;
+    --accent-2: #22ff95;
+    --accent-2-hover: #5cffb5;
+    --ring: rgba(255, 45, 85, 0.45);
+    --shadow-sm: 0 10px 26px rgba(0, 0, 0, 0.30);
+    --shadow-md: 0 22px 70px rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme='light'] {
+    --bg: #f5f5f7;
+    --surface: rgba(255, 255, 255, 0.72);
+    --surface-solid: #ffffff;
+    --border: rgba(0, 0, 0, 0.12);
+    --text: #1d1d1f;
+    --muted: rgba(29, 29, 31, 0.68);
+    --accent: #ff2d55;
+    --accent-hover: #ff4d6d;
+    --accent-2: #1ed760;
+    --accent-2-hover: #35eb77;
+    --ring: rgba(255, 45, 85, 0.35);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+@supports ((-webkit-backdrop-filter: blur(18px)) or (backdrop-filter: blur(18px))) {
+    :root[data-theme='light'] {
+        --surface: rgba(255, 255, 255, 0.68);
+    }
+    :root[data-theme='dark'] {
+        --surface: rgba(28, 28, 30, 0.64);
+    }
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+::selection {
+    background: rgba(255, 45, 85, 0.26);
+}
+
+*:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--ring);
+    border-radius: 12px;
+}
+
+.container {
+    width: 100%;
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--pad-x);
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.card-hover {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(255, 45, 85, 0.28);
+}
+
+.glow-accent {
+    box-shadow: var(--glow-1);
+}
+
+.glow-accent-2 {
+    box-shadow: var(--glow-2);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface-solid);
+    color: var(--text);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+}
+
+.btn-accent-2 {
+    background: var(--accent-2);
+    color: #07110b;
+    border-color: rgba(0, 0, 0, 0.10);
+}
+
+.btn-accent-2:hover {
+    background: var(--accent-2-hover);
+}
+
+.btn-ghost {
+    background: transparent;
+}
+
+.muted {
+    color: var(--muted);
 }
 
 #root {

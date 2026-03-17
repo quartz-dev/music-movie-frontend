@@ -9,23 +9,29 @@ import Settings from './Settings';
 import Popular from './Popular';
 import Categories from './Categories';
 import Playlists from './Playlists';
+import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import './App.css';
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/movie/:movieName" element={<MovieResults />} />
-        <Route path="/movie-detail/:movieId/:movieTitle" element={<MovieDetail />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/popular" element={<Popular />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/playlists" element={<Playlists />} />
-      </Routes>
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/movie/:movieName" element={<MovieResults />} />
+            <Route path="/movie-detail/:movieId/:movieTitle" element={<MovieDetail />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/popular" element={<Popular />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/playlists" element={<Playlists />} />
+          </Routes>
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

@@ -125,6 +125,19 @@ const api = {
     }
   },
 
+  // Top Public Playlists (most favorited)
+  getTopPublicPlaylists: async (limit = 10) => {
+    try {
+      const response = await apiClient.get(`/playlists/public/top`, {
+        params: { limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Top public playlists error:', error);
+      throw error;
+    }
+  },
+
   // Create Playlist from Movie
   createPlaylistFromMovie: async (movieId, playlistName) => {
     try {
@@ -139,10 +152,12 @@ const api = {
     }
   },
 
-  // User Profile
+  // Endpoint for getting current authenticated user
   getUserProfile: async () => {
     try {
-      const response = await apiClient.get(`/user/profile`);
+      // Backendde '/Users/profile' veya benzeri olabilir, ama genellikle '/Users/me' olur .NET'te eğer profile yoksa.
+      // Eger calismazsa diye hata firlatmiyor da bazi fallback ler yapalim
+      const response = await apiClient.get(`/Users/profile`).catch(() => apiClient.get(`/user/profile`));
       return response.data;
     } catch (error) {
       console.error('User profile error:', error);
@@ -193,10 +208,12 @@ const api = {
         email,
         password
       });
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
+      const data = response.data;
+      const token = data.token || data?.data?.token || data.accessToken || data?.data?.accessToken;
+      if (token) {
+        localStorage.setItem('authToken', token);
       }
-      return response.data;
+      return data;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -204,13 +221,9 @@ const api = {
   },
 
   // Auth - Register
-  register: async (email, password, username) => {
+  register: async (userData) => {
     try {
-      const response = await apiClient.post(`/Users/register`, {
-        email,
-        password,
-        username
-      });
+      const response = await apiClient.post(`/Users/register`, userData);
       return response.data;
     } catch (error) {
       console.error('Register error:', error);

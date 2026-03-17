@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import api from './services/api';
+import { useAuth } from './context/AuthContext';
 import './Auth.css';
 
 function Login() {
   const navigate = useNavigate();
+  const auth = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -28,7 +30,7 @@ function Login() {
     setError('');
 
     try {
-      const response = await api.login(formData.email, formData.password);
+      const response = await auth.login(formData.email, formData.password);
       console.log('Login successful:', response);
       
       // Redirect to home page

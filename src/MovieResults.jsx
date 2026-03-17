@@ -65,110 +65,94 @@ function MovieResults() {
 
   return (
     <div className="results-container">
-      {/* Header - Google tarzı arama çubuğu ile */}
       <header className="results-header">
-        <div className="header-content">
-          <div className="logo-section" onClick={handleLogoClick}>
-            <Film size={32} className="logo-icon" />
-            <span className="logo-text">MovieSearch</span>
-          </div>
+        <div className="results-header-inner">
+          <button type="button" className="results-logo" onClick={handleLogoClick}>
+            <Film size={18} />
+            <span>MovieSearch</span>
+          </button>
 
-          <form className="search-bar" onSubmit={handleSearch}>
-            <Search size={20} className="search-bar-icon" />
+          <form className="results-search" onSubmit={handleSearch}>
+            <Search size={18} className="results-search-icon" />
             <input
               type="text"
-              className="search-bar-input"
+              className="results-search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Film ara..."
+              placeholder="Search movies"
             />
           </form>
 
-          {/* Profil Butonu */}
-          <div className="header-profile-wrapper">
-            <div className="profile-menu-wrapper">
-              <button 
-                className="profile-button"
-                onClick={handleProfileClick}
-                aria-label="Profil menüsü"
-              >
-                <User size={20} />
-              </button>
+          <div className="profile-menu-wrapper">
+            <button className="profile-button" onClick={handleProfileClick} aria-label="Profil menüsü">
+              <User size={20} />
+            </button>
 
-              {/* Dropdown Menü */}
-              {showProfileMenu && (
-                <div className="profile-dropdown">
-                  <button 
-                    className="dropdown-item"
-                    onClick={handleProfileNavigate}
-                  >
-                    <User size={18} />
-                    <span>Profilim</span>
-                  </button>
-                  <button 
-                    className="dropdown-item"
-                    onClick={handleSettingsNavigate}
-                  >
-                    <Settings size={18} />
-                    <span>Ayarlar</span>
-                  </button>
-                </div>
-              )}
-            </div>
+            {showProfileMenu && (
+              <div className="profile-dropdown">
+                <button className="dropdown-item" onClick={handleProfileNavigate}>
+                  <User size={18} />
+                  <span>Profilim</span>
+                </button>
+                <button className="dropdown-item" onClick={handleSettingsNavigate}>
+                  <Settings size={18} />
+                  <span>Ayarlar</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Ana içerik alanı */}
       <main className="results-main">
-        <div className="results-info">
-          <p className="results-count">"{movieName}" için sonuçlar</p>
-        </div>
+        <section className="results-hero">
+          <p className="results-kicker">Search results</p>
+          <h1 className="results-title">“{movieName}”</h1>
+          <p className="results-subtitle">Browse results and open a movie to get mood-based music recommendations.</p>
+        </section>
 
-        <div className="results-content">
-          {loading && (
-            <div className="loading-message">
-              <p>Loading movies...</p>
-            </div>
-          )}
+        {loading && (
+          <div className="results-state">
+            <p>Loading movies...</p>
+          </div>
+        )}
 
-          {error && (
-            <div className="error-message">
-              <p>{error}</p>
-            </div>
-          )}
+        {error && (
+          <div className="results-state">
+            <p>{error}</p>
+          </div>
+        )}
 
-          {!loading && !error && movies.length === 0 && (
-            <div className="no-results">
-              <p>No movies found for "{movieName}"</p>
-            </div>
-          )}
+        {!loading && !error && movies.length === 0 && (
+          <div className="results-state">
+            <p>No movies found for “{movieName}”.</p>
+          </div>
+        )}
 
-          {!loading && !error && movies.length > 0 && movies.map((movie) => (
-            <div 
-              key={movie.id} 
-              className="result-card" 
-              onClick={() => handleMovieClick(movie.id, movie.title)}
-            >
-              <div className="result-poster">
-                {movie.posterUrl ? (
-                  <img src={movie.posterUrl} alt={movie.title} />
-                ) : (
-                  <Film size={60} className="placeholder-icon" />
-                )}
-              </div>
-              <div className="result-details">
-                <h2 className="result-title">{movie.title}</h2>
-                <p className="result-meta">
-                  {movie.year} • {movie.genres?.join(', ')}
-                </p>
-                <p className="result-description">
-                  {movie.overview || 'No description available.'}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+        {!loading && !error && movies.length > 0 && (
+          <section className="results-grid" aria-label="Movie results">
+            {movies.map((movie) => (
+              <article
+                key={movie.id}
+                className="results-card"
+                onClick={() => handleMovieClick(movie.id, movie.title)}
+              >
+                <div className="results-poster">
+                  {movie.posterUrl ? (
+                    <img src={movie.posterUrl} alt={movie.title} loading="lazy" />
+                  ) : (
+                    <Film size={44} className="results-poster-placeholder" />
+                  )}
+                </div>
+                <div className="results-card-body">
+                  <h2 className="results-card-title">{movie.title}</h2>
+                  <p className="results-card-meta">{movie.year}{movie.genres?.length ? ` • ${movie.genres.join(', ')}` : ''}</p>
+                  <p className="results-card-desc">{movie.overview || 'No description available.'}</p>
+                </div>
+              </article>
+            ))}
+          </section>
+        )}
       </main>
     </div>
   );

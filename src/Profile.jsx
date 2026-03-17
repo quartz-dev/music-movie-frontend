@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Calendar, Film, Music, Clock, Sparkles, Settings } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
 import './Profile.css';
 
 function Profile() {
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const auth = useAuth();
+
+  const userData = auth.user;
 
   const handleProfileClick = () => {
     setShowProfileMenu(!showProfileMenu);
@@ -64,11 +68,26 @@ function Profile() {
           {/* Profil Butonu */}
           <div className="profile-menu-wrapper">
             <button 
-              className="profile-button"
+              className="profile-button avatar-circle"
               onClick={handleProfileClick}
               aria-label="Profil menüsü"
+              style={{ width: '40px', height: '40px', borderRadius: '50%', padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--accent)', color: 'white', fontWeight: 'bold' }}
             >
-              <User size={20} />
+              {userData?.profilePictureUrl ? (
+                <img src={userData.profilePictureUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : userData?.username ? (
+                userData.username.charAt(0).toUpperCase()
+              ) : userData?.userName ? (
+                userData.userName.charAt(0).toUpperCase()
+              ) : userData?.name ? (
+                userData.name.charAt(0).toUpperCase()
+              ) : userData?.firstName ? (
+                userData.firstName.charAt(0).toUpperCase()
+              ) : userData?.email ? (
+                userData.email.charAt(0).toUpperCase()
+              ) : (
+                <User size={20} />
+              )}
             </button>
 
             {/* Dropdown Menü */}
@@ -98,13 +117,39 @@ function Profile() {
       </div>
 
       <div className="profile-content">
+        {auth.loading && (
+          <div className="profile-section">
+            <div className="section-header">
+              <h2 className="section-title">Loading...</h2>
+            </div>
+          </div>
+        )}
         {/* Kullanıcı Bilgileri Kartı */}
         <div className="profile-card">
-          <div className="profile-avatar">
-            <User size={60} />
+          <div className="profile-avatar profile-avatar--filled" style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--accent)', color: 'white', fontSize: '32px', fontWeight: 'bold', margin: '0 auto 20px auto' }}>
+              {userData?.profilePictureUrl ? (
+                <img src={userData.profilePictureUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : userData?.username ? (
+                userData.username.charAt(0).toUpperCase()
+              ) : userData?.userName ? (
+                userData.userName.charAt(0).toUpperCase()
+              ) : userData?.name ? (
+                userData.name.charAt(0).toUpperCase()
+              ) : userData?.firstName ? (
+                userData.firstName.charAt(0).toUpperCase()
+              ) : userData?.email ? (
+                userData.email.charAt(0).toUpperCase()
+              ) : (
+                <User size={40} />
+              )}
           </div>
 
-          <h1 className="profile-title">Kullanıcı Profili</h1>
+          <h1 className="profile-title">{
+            (userData?.name || userData?.firstName) && (userData?.surname || userData?.lastName) 
+              ? `${userData.name || userData.firstName} ${userData.surname || userData.lastName}` 
+              : userData?.name ? userData.name
+              : (userData?.username || userData?.userName || 'Kullanıcı Profili')
+          }</h1>
 
           <div className="profile-stats">
             <div className="stat-item">
@@ -130,7 +175,7 @@ function Profile() {
               <Mail size={20} />
               <div className="info-text">
                 <span className="info-label">E-posta</span>
-                <span className="info-value">kullanici@example.com</span>
+                <span className="info-value">{userData?.email || 'Bilinmiyor'}</span>
               </div>
             </div>
 
@@ -138,7 +183,7 @@ function Profile() {
               <Calendar size={20} />
               <div className="info-text">
                 <span className="info-label">Üyelik Tarihi</span>
-                <span className="info-value">Ocak 2024</span>
+                <span className="info-value">{userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Bilinmiyor'}</span>
               </div>
             </div>
           </div>
