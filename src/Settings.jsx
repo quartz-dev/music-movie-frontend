@@ -22,7 +22,7 @@ function Settings() {
       <div className="settings-header">
         <button onClick={() => navigate('/')} className="back-btn">
           <ArrowLeft size={20} />
-          Ana Sayfa
+          Home
         </button>
 
         {/* Profil Butonu */}
@@ -30,7 +30,7 @@ function Settings() {
           <button 
             className="profile-button"
             onClick={handleProfileClick}
-            aria-label="Profil menüsü"
+              aria-label="Profile menu"
           >
             <User size={20} />
           </button>
@@ -48,7 +48,7 @@ function Settings() {
                 onClick={handleProfileNavigate}
               >
                 <User size={18} />
-                <span>Profilim</span>
+                <span>Profile</span>
               </button>
               <button
                 className="dropdown-item"
@@ -58,7 +58,7 @@ function Settings() {
                 }}
               >
                 <SettingsIcon size={18} />
-                <span>Ayarlar</span>
+                <span>Settings</span>
               </button>
             </div>
           </CSSTransition>
@@ -66,59 +66,59 @@ function Settings() {
       </div>
 
       <div className="settings-content">
-        <h1 className="settings-title">Ayarlar</h1>
+        <h1 className="settings-title">Settings</h1>
         
         <div className="settings-section">
-          <h2 className="section-title">Genel Ayarlar</h2>
+          <h2 className="section-title">General</h2>
           
           <div className="settings-item">
             <div className="settings-item-info">
               <Bell size={24} className="settings-icon" />
               <div>
-                <h3 className="settings-item-title">Bildirimler</h3>
-                <p className="settings-item-desc">Bildirim tercihlerini yönetin</p>
+                <h3 className="settings-item-title">Notifications</h3>
+                <p className="settings-item-desc">Manage notification preferences</p>
               </div>
             </div>
-            <button className="settings-btn">Düzenle</button>
+            <button className="settings-btn">Edit</button>
           </div>
 
           <div className="settings-item">
             <div className="settings-item-info">
               <Lock size={24} className="settings-icon" />
               <div>
-                <h3 className="settings-item-title">Gizlilik ve Güvenlik</h3>
-                <p className="settings-item-desc">Hesap güvenliği ayarları</p>
+                <h3 className="settings-item-title">Privacy & Security</h3>
+                <p className="settings-item-desc">Account security settings</p>
               </div>
             </div>
-            <button className="settings-btn">Düzenle</button>
+            <button className="settings-btn">Edit</button>
           </div>
 
           <div className="settings-item">
             <div className="settings-item-info">
               <Palette size={24} className="settings-icon" />
               <div>
-                <h3 className="settings-item-title">Tema</h3>
-                <p className="settings-item-desc">Görünüm ve tema seçenekleri</p>
+                <h3 className="settings-item-title">Theme</h3>
+                <p className="settings-item-desc">Appearance and theme options</p>
               </div>
             </div>
-            <button className="settings-btn">Düzenle</button>
+            <button className="settings-btn">Edit</button>
           </div>
 
           <div className="settings-item">
             <div className="settings-item-info">
               <Globe size={24} className="settings-icon" />
               <div>
-                <h3 className="settings-item-title">Dil ve Bölge</h3>
-                <p className="settings-item-desc">Dil ve bölge tercihleri</p>
+                <h3 className="settings-item-title">Language & Region</h3>
+                <p className="settings-item-desc">Language and region preferences</p>
               </div>
             </div>
-            <button className="settings-btn">Düzenle</button>
+            <button className="settings-btn">Edit</button>
           </div>
         </div>
 
         <p className="settings-note">
-          Bu bir örnek ayarlar sayfasıdır. Gerçek ayarlar backend sistemi 
-          entegre edildiğinde burada düzenlenebilecektir.
+          This is a sample settings page. These settings will be editable here
+          when the backend system is integrated.
         </p>
       </div>
     </div>

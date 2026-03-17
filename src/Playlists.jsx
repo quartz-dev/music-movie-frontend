@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronDown, Plus, Search } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Film, Search } from 'lucide-react';
 import './Playlists.css';
 
 function Playlists() {
@@ -8,10 +8,8 @@ function Playlists() {
   const [sortOpen, setSortOpen] = useState(false);
   const [sortBy, setSortBy] = useState('recent');
   const [query, setQuery] = useState('');
-  const [createOpen, setCreateOpen] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [createError, setCreateError] = useState('');
+  const [activeTab, setActiveTab] = useState('playlists');
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   const handleSearchClick = () => {
     if (query.trim()) {
@@ -24,33 +22,11 @@ function Playlists() {
     handleSearchClick();
   };
 
-  const openCreate = () => {
-    setCreateError('');
-    setNewName('');
-    setNewDescription('');
-    setCreateOpen(true);
-  };
-
-  const closeCreate = () => {
-    setCreateOpen(false);
-  };
-
-  const handleCreateSubmit = (e) => {
-    e.preventDefault();
-    const name = newName.trim();
-    if (!name) {
-      setCreateError('Lütfen bir çalma listesi adı girin.');
-      return;
-    }
-
-    closeCreate();
-  };
-
   const playlists = [
     {
       id: 1,
       name: 'Beğenilen Şarkılar',
-      subtitle: 'Çalma listesi • 228 şarkı',
+      movieTitle: null,
       coverType: 'liked',
       createdAt: '2026-03-10',
       songCount: 228,
@@ -58,7 +34,7 @@ function Playlists() {
     {
       id: 2,
       name: 'Inception Soundtrack Mix',
-      subtitle: 'Çalma listesi • yener',
+      movieTitle: 'Inception',
       coverUrl: 'https://picsum.photos/seed/inception/400/400',
       createdAt: '2026-03-16',
       songCount: 12,
@@ -66,7 +42,7 @@ function Playlists() {
     {
       id: 3,
       name: 'Sci‑Fi Classics',
-      subtitle: 'Çalma listesi • yener',
+      movieTitle: 'Interstellar',
       coverUrl: 'https://picsum.photos/seed/scifi/400/400',
       createdAt: '2026-02-22',
       songCount: 20,
@@ -74,7 +50,7 @@ function Playlists() {
     {
       id: 4,
       name: 'Epic Movie Themes',
-      subtitle: 'Çalma listesi • yener',
+      movieTitle: 'The Dark Knight',
       coverUrl: 'https://picsum.photos/seed/epic/400/400',
       createdAt: '2025-12-02',
       songCount: 15,
@@ -82,24 +58,44 @@ function Playlists() {
     {
       id: 5,
       name: 'Big Boss Music',
-      subtitle: 'Çalma listesi • Bang…',
+      movieTitle: 'Bang…',
       coverUrl: 'https://picsum.photos/seed/bigboss/400/400',
       createdAt: '2026-01-08',
       songCount: 35,
     },
   ];
 
+  const movies = useMemo(() => {
+    const map = new Map();
+    for (const p of playlists) {
+      if (!p.movieTitle) continue;
+      const key = p.movieTitle;
+      const existing = map.get(key);
+      if (existing) {
+        existing.playlistCount += 1;
+        continue;
+      }
+      map.set(key, {
+        title: p.movieTitle,
+        coverUrl: p.coverUrl,
+        posterType: p.coverType,
+        playlistCount: 1,
+      });
+    }
+    return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
+  }, [playlists]);
+
   const sortLabel = useMemo(() => {
     switch (sortBy) {
       case 'name_asc':
-        return 'İsim (A–Z)';
+        return 'Name (A–Z)';
       case 'name_desc':
-        return 'İsim (Z–A)';
+        return 'Name (Z–A)';
       case 'songs_desc':
-        return 'Şarkı sayısı';
+        return 'Song count';
       case 'recent':
       default:
-        return 'Yakın tarihli';
+        return 'Most recent';
     }
   }, [sortBy]);
 
@@ -122,11 +118,34 @@ function Playlists() {
     }
   }, [playlists, sortBy]);
 
+  const visiblePlaylists = useMemo(() => {
+    if (activeTab !== 'movies') return sortedPlaylists;
+    if (!selectedMovie) return [];
+    return sortedPlaylists.filter((p) => (p.movieTitle || '') === selectedMovie);
+  }, [activeTab, selectedMovie, sortedPlaylists]);
+
+  const filteredMovies = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return movies;
+    return movies.filter((m) => (m.title || '').toLowerCase().includes(q));
+  }, [movies, query]);
+
+  const filteredPlaylists = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return visiblePlaylists;
+
+    if (activeTab === 'movies') {
+      return visiblePlaylists;
+    }
+
+    return visiblePlaylists.filter((p) => (p.name || '').toLowerCase().includes(q));
+  }, [activeTab, query, visiblePlaylists]);
+
   return (
     <div className="dark-container">
       <main className="library-page">
       <div className="library-topbar">
-        <h1 className="library-title">Kitaplığın</h1>
+        <h1 className="library-title">Your Library</h1>
 
         <form className="library-topbar-search" role="search" onSubmit={handleSearchSubmit}>
           <input
@@ -134,16 +153,16 @@ function Playlists() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Kitaplığında ara"
-            aria-label="Kitaplığında ara"
+            placeholder="Search your library"
+            aria-label="Search your library"
           />
           <Search
             size={18}
             className="library-search-icon library-search-icon-right"
             onClick={handleSearchClick}
             role="button"
-            aria-label="Ara"
-            title="Ara"
+            aria-label="Search"
+            title="Search"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') handleSearchClick();
@@ -151,27 +170,36 @@ function Playlists() {
           />
         </form>
 
-        <div className="library-topbar-actions">
-          <button className="library-create-btn" type="button" onClick={openCreate}>
-            <Plus size={18} />
-            Oluştur
-          </button>
-
-          <button
-            className="library-create-btn"
-            type="button"
-            onClick={() => navigate('/')}
-            aria-label="Ana sayfaya dön"
-          >
-            Ana Sayfa
-          </button>
-        </div>
+         <div className="library-topbar-actions" />
       </div>
 
       <div className="library-tabs-row">
-        <div className="library-tabs library-tabs--right" role="tablist" aria-label="Kütüphane filtreleri">
-          <button className="library-tab is-active" type="button">Çalma Listeleri</button>
-          <button className="library-tab" type="button">Sanatçılar</button>
+        <div className="library-tabs" role="tablist" aria-label="Library filters">
+          <button className="nav-button" type="button" onClick={() => navigate('/')} aria-label="Go to Home">
+            <Film size={18} />
+            <span>Home</span>
+          </button>
+
+          <button
+            className={`library-tab ${activeTab === 'playlists' ? 'is-active' : ''}`}
+            type="button"
+            onClick={() => {
+              setActiveTab('playlists');
+              setSelectedMovie(null);
+            }}
+          >
+            Playlists
+          </button>
+          <button
+            className={`library-tab ${activeTab === 'movies' ? 'is-active' : ''}`}
+            type="button"
+            onClick={() => {
+              setActiveTab('movies');
+              setSelectedMovie(null);
+            }}
+          >
+            Movies
+          </button>
         </div>
       </div>
 
@@ -201,7 +229,7 @@ function Playlists() {
                   }}
                 >
                   <span className="library-sort-item-left">
-                    Yakın tarihli
+                    Most recent
                   </span>
                   {sortBy === 'recent' && <Check size={16} />}
                 </button>
@@ -215,7 +243,8 @@ function Playlists() {
                     setSortOpen(false);
                   }}
                 >
-                  <span className="library-sort-item-left">İsim (A–Z)</span>
+                  <span className="library-sort-item-left">Name (A–Z)</span>
+
                   {sortBy === 'name_asc' && <Check size={16} />}
                 </button>
 
@@ -228,7 +257,7 @@ function Playlists() {
                     setSortOpen(false);
                   }}
                 >
-                  <span className="library-sort-item-left">İsim (Z–A)</span>
+                  <span className="library-sort-item-left">Name (Z–A)</span>
                   {sortBy === 'name_desc' && <Check size={16} />}
                 </button>
 
@@ -241,7 +270,7 @@ function Playlists() {
                     setSortOpen(false);
                   }}
                 >
-                  <span className="library-sort-item-left">Şarkı sayısı</span>
+                  <span className="library-sort-item-left">Song count</span>
                   {sortBy === 'songs_desc' && <Check size={16} />}
                 </button>
               </div>
@@ -251,100 +280,140 @@ function Playlists() {
       </div>
 
       <div className="library-grid">
-        {sortedPlaylists.map((p) => (
-          <div
-            key={p.id}
-            className="library-card"
-            role="button"
-            tabIndex={0}
-            onClick={() => navigate(`/playlists/${p.id}`)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') navigate(`/playlists/${p.id}`);
-            }}
-          >
-            <div className="library-cover">
-              {p.coverType === 'liked' ? (
-                <div
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'grid',
-                    placeItems: 'center',
-                    background:
-                      'linear-gradient(135deg, rgba(78, 46, 255, 0.9) 0%, rgba(169, 185, 255, 0.55) 100%)',
-                  }}
-                >
-                  <span style={{ fontSize: 44, color: '#fff', lineHeight: 1 }}>♥</span>
+        {activeTab === 'movies' && !selectedMovie && (
+          <>
+            {filteredMovies.map((m) => (
+              <div
+                key={m.title}
+                className="library-card"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedMovie(m.title)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') setSelectedMovie(m.title);
+                }}
+              >
+                <div className="library-cover">
+                  {m.coverUrl ? (
+                    <img src={m.coverUrl} alt="" />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'grid',
+                        placeItems: 'center',
+                        background:
+                          'linear-gradient(135deg, rgba(78, 46, 255, 0.9) 0%, rgba(169, 185, 255, 0.55) 100%)',
+                      }}
+                    >
+                      <Film size={44} className="results-poster-placeholder" />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <img src={p.coverUrl} alt="" />
-              )}
+                <div className="library-card-title">{m.title}</div>
+                <p className="library-card-subtitle">{m.playlistCount} playlist{m.playlistCount === 1 ? '' : 's'}</p>
+              </div>
+            ))}
+          </>
+        )}
 
+        {activeTab === 'movies' && selectedMovie && (
+          <>
+            <div
+              key="back"
+              className="library-card library-card--back"
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedMovie(null)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setSelectedMovie(null);
+              }}
+            >
+              <div className="library-cover library-cover--back">
+                <ArrowLeft size={42} />
+              </div>
+              <div className="library-card-title">Back</div>
+              <p className="library-card-subtitle">All movies</p>
             </div>
 
-            <div className="library-card-title">{p.name}</div>
-            <p className="library-card-subtitle">{p.subtitle}</p>
-          </div>
-        ))}
+            {filteredPlaylists.map((p) => (
+              <div
+                key={p.id}
+                className="library-card"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/playlists/${p.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') navigate(`/playlists/${p.id}`);
+                }}
+              >
+                <div className="library-cover">
+                  {p.coverType === 'liked' ? (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'grid',
+                        placeItems: 'center',
+                        background:
+                          'linear-gradient(135deg, rgba(78, 46, 255, 0.9) 0%, rgba(169, 185, 255, 0.55) 100%)',
+                      }}
+                    >
+                      <span style={{ fontSize: 44, color: '#fff', lineHeight: 1 }}>♥</span>
+                    </div>
+                  ) : (
+                    <img src={p.coverUrl} alt="" />
+                  )}
+                </div>
+
+                <div className="library-card-title">{p.name}</div>
+                <p className="library-card-subtitle">{p.movieTitle || '—'}</p>
+              </div>
+            ))}
+          </>
+        )}
+
+        {activeTab !== 'movies' && (
+          <>
+            {filteredPlaylists.map((p) => (
+              <div
+                key={p.id}
+                className="library-card"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/playlists/${p.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') navigate(`/playlists/${p.id}`);
+                }}
+              >
+                <div className="library-cover">
+                  {p.coverType === 'liked' ? (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'grid',
+                        placeItems: 'center',
+                        background:
+                          'linear-gradient(135deg, rgba(78, 46, 255, 0.9) 0%, rgba(169, 185, 255, 0.55) 100%)',
+                      }}
+                    >
+                      <span style={{ fontSize: 44, color: '#fff', lineHeight: 1 }}>♥</span>
+                    </div>
+                  ) : (
+                    <img src={p.coverUrl} alt="" />
+                  )}
+                </div>
+
+                <div className="library-card-title">{p.name}</div>
+                <p className="library-card-subtitle">{p.movieTitle || '—'}</p>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
-      {createOpen && (
-        <div
-          className="library-modal-backdrop"
-          role="presentation"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) closeCreate();
-          }}
-        >
-          <div
-            className="library-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Çalma listesi oluştur"
-          >
-            <div className="library-modal-header">
-              <div className="library-modal-title">Çalma listesi oluştur</div>
-              <button className="library-modal-close" type="button" onClick={closeCreate} aria-label="Kapat">
-                ×
-              </button>
-            </div>
-
-            <form className="library-modal-form" onSubmit={handleCreateSubmit}>
-              <label className="library-modal-label" htmlFor="playlistName">Ad</label>
-              <input
-                id="playlistName"
-                className="library-modal-input"
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Örn: Movie Night"
-                autoFocus
-              />
-
-              <label className="library-modal-label" htmlFor="playlistDesc">Açıklama (opsiyonel)</label>
-              <textarea
-                id="playlistDesc"
-                className="library-modal-textarea"
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-                placeholder="İstersen kısa bir not ekleyebilirsin…"
-                rows={3}
-              />
-
-              {createError && <div className="library-modal-error" role="alert">{createError}</div>}
-
-              <div className="library-modal-actions">
-                <button className="library-modal-btn library-modal-btn--ghost" type="button" onClick={closeCreate}>
-                  Vazgeç
-                </button>
-                <button className="library-modal-btn" type="submit">
-                  Oluştur
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
       </main>
     </div>
   );

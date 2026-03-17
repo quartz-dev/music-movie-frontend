@@ -21,12 +21,12 @@ function Profile() {
     setShowProfileMenu(false);
   };
 
-  // Örnek veriler - gerçek veriler API'den gelecek
+  // Sample data - real data will come from the API
   const recentSearches = [
-    { id: 1, title: "Inception", year: 2010, searchDate: "2 gün önce" },
-    { id: 2, title: "Interstellar", year: 2014, searchDate: "1 hafta önce" },
-    { id: 3, title: "The Dark Knight", year: 2008, searchDate: "2 hafta önce" },
-    { id: 4, title: "Pulp Fiction", year: 1994, searchDate: "1 ay önce" },
+    { id: 1, title: "Inception", year: 2010, searchDate: "2 days ago" },
+    { id: 2, title: "Interstellar", year: 2014, searchDate: "1 week ago" },
+    { id: 3, title: "The Dark Knight", year: 2008, searchDate: "2 weeks ago" },
+    { id: 4, title: "Pulp Fiction", year: 1994, searchDate: "1 month ago" },
   ];
 
   const playlists = [
@@ -34,21 +34,21 @@ function Profile() {
       id: 1, 
       name: "Inception Soundtrack Mix", 
       songCount: 12, 
-      duration: "48 dk",
+      duration: "48 min",
       movie: "Inception"
     },
     { 
       id: 2, 
       name: "Sci-Fi Classics", 
       songCount: 20, 
-      duration: "1s 20dk",
+      duration: "1 hr 20 min",
       movie: "Interstellar"
     },
     { 
       id: 3, 
       name: "Epic Movie Themes", 
       songCount: 15, 
-      duration: "58 dk",
+      duration: "58 min",
       movie: "The Dark Knight"
     },
   ];
@@ -58,12 +58,12 @@ function Profile() {
       <div className="profile-header">
         <button onClick={() => navigate('/')} className="back-btn">
           <ArrowLeft size={20} />
-          Ana Sayfa
+          Home
         </button>
 
         <div className="header-right-section">
           <button onClick={() => navigate('/settings')} className="settings-link-btn">
-            Ayarlar
+            Settings
           </button>
 
           {/* Profil Butonu */}
@@ -71,7 +71,7 @@ function Profile() {
             <button 
               className="profile-button avatar-circle"
               onClick={handleProfileClick}
-              aria-label="Profil menüsü"
+              aria-label="Profile menu"
               style={{ width: '40px', height: '40px', borderRadius: '50%', padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--accent)', color: 'white', fontWeight: 'bold' }}
             >
               {userData?.profilePictureUrl ? (
@@ -107,14 +107,14 @@ function Profile() {
                   }}
                 >
                   <User size={18} />
-                  <span>Profilim</span>
+                  <span>Profile</span>
                 </button>
                 <button
                   className="dropdown-item"
                   onClick={handleSettingsNavigate}
                 >
                   <Settings size={18} />
-                  <span>Ayarlar</span>
+                  <span>Settings</span>
                 </button>
               </div>
             </CSSTransition>
@@ -181,7 +181,7 @@ function Profile() {
               <Mail size={20} />
               <div className="info-text">
                 <span className="info-label">E-posta</span>
-                <span className="info-value">{userData?.email || 'Bilinmiyor'}</span>
+                <span className="info-value">{userData?.email || 'Unknown'}</span>
               </div>
             </div>
 
@@ -189,7 +189,7 @@ function Profile() {
               <Calendar size={20} />
               <div className="info-text">
                 <span className="info-label">Üyelik Tarihi</span>
-                <span className="info-value">{userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Bilinmiyor'}</span>
+                <span className="info-value">{userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Unknown'}</span>
               </div>
             </div>
           </div>
@@ -200,7 +200,7 @@ function Profile() {
           <div className="section-header">
             <h2 className="section-title">
               <Clock size={24} />
-              Son Aranan Filmler
+              Recently searched movies
             </h2>
           </div>
 
@@ -225,7 +225,7 @@ function Profile() {
           <div className="section-header">
             <h2 className="section-title">
               <Music size={24} />
-              Playlistlerim
+              My playlists
             </h2>
           </div>
 
@@ -237,15 +237,15 @@ function Profile() {
                 </div>
                 <div className="playlist-info">
                   <h3 className="playlist-name">{playlist.name}</h3>
-                  <p className="playlist-source">"{playlist.movie}" filminden</p>
+                  <p className="playlist-source">From the movie "{playlist.movie}"</p>
                   <div className="playlist-meta">
-                    <span>{playlist.songCount} şarkı</span>
+                    <span>{playlist.songCount} songs</span>
                     <span className="meta-dot">•</span>
                     <span>{playlist.duration}</span>
                   </div>
                 </div>
                 <button className="playlist-play-btn">
-                  Çal
+                  Play
                 </button>
               </div>
             ))}
@@ -253,8 +253,8 @@ function Profile() {
         </div>
 
         <p className="profile-note">
-          Bu bir örnek profil sayfasıdır. Gerçek kullanıcı verileri 
-          authentication ve film API'si entegre edildiğinde burada gösterilecektir.
+          This is a sample profile page. Real user data will be shown here when
+          authentication and the movie API are integrated.
         </p>
       </div>
     </div>

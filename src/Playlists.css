@@ -238,8 +238,8 @@
   margin-bottom: 16px;
 }
 
-.library-tabs--right {
-  margin-left: auto;
+.library-tabs {
+  flex-wrap: wrap;
 }
 
 .library-tabs-search {
@@ -658,6 +658,18 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.library-card--back .library-card-title,
+.library-card--back .library-card-subtitle {
+  text-align: center;
+}
+
+.library-cover--back {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(255, 45, 85, 0.22) 0%, rgba(34, 255, 149, 0.14) 100%);
+  color: var(--text);
 }
 
 @media (max-width: 768px) {

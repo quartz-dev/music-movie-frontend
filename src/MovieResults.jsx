@@ -14,7 +14,7 @@ function MovieResults() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Film araması yap
+  // Search movies
   useEffect(() => {
     const fetchMovies = async () => {
       try {
@@ -114,11 +114,11 @@ function MovieResults() {
                 <div className="profile-dropdown">
                   <button className="dropdown-item" onClick={handleProfileNavigate}>
                     <User size={18} />
-                    <span>Profilim</span>
+                    <span>Profile</span>
                   </button>
                   <button className="dropdown-item" onClick={handleSettingsNavigate}>
                     <Settings size={18} />
-                    <span>Ayarlar</span>
+                    <span>Settings</span>
                   </button>
                 </div>
               </CSSTransition>

@@ -112,29 +112,29 @@ function PlaylistDetail() {
           className="pld-back"
           type="button"
           onClick={() => navigate(-1)}
-          aria-label="Geri"
-          title="Geri"
+          aria-label="Back"
+          title="Back"
         >
           <ArrowLeft size={18} />
-          <span>Geri</span>
+          <span>Back</span>
         </button>
 
         <button
           className="pld-library"
           type="button"
           onClick={() => navigate('/playlists')}
-          aria-label="Kitaplık"
-          title="Kitaplık"
+          aria-label="Library"
+          title="Library"
         >
-          Kitaplık
+          Library
         </button>
 
         <button
           className="pld-profile"
           type="button"
           onClick={() => navigate('/profile')}
-          aria-label="Profil"
-          title="Profil"
+          aria-label="Profile"
+          title="Profile"
         >
           <UserCircle2 size={22} />
         </button>
@@ -143,7 +143,7 @@ function PlaylistDetail() {
       <main className="pld-page">
         <aside className="pld-sidebar">
           <div className="pld-sidebar-top">
-            <div className="pld-sidebar-title">Kitaplığın</div>
+            <div className="pld-sidebar-title">Your Library</div>
           </div>
 
           <div className="pld-sidebar-list" role="list">
@@ -181,9 +181,9 @@ function PlaylistDetail() {
             </div>
 
             <div className="pld-hero-meta">
-              <div className="pld-hero-type">Herkese Açık Çalma Listesi</div>
+              <div className="pld-hero-type">Public Playlist</div>
               <h1 className="pld-hero-title">{playlist?.name}</h1>
-              <div className="pld-hero-sub">yener • {tracks.length} şarkı</div>
+              <div className="pld-hero-sub">yener • {tracks.length} songs</div>
             </div>
           </header>
 
@@ -194,18 +194,18 @@ function PlaylistDetail() {
               type="text"
               value={trackQuery}
               onChange={(e) => setTrackQuery(e.target.value)}
-              placeholder="Bu çalma listesinde ara"
-              aria-label="Bu çalma listesinde ara"
+              placeholder="Search in this playlist"
+              aria-label="Search in this playlist"
             />
           </form>
 
           <div className="pld-table">
             <div className="pld-row pld-row--head" role="row">
               <div className="pld-col pld-col--idx">#</div>
-              <div className="pld-col pld-col--title">Başlık</div>
-              <div className="pld-col pld-col--album">Albüm</div>
-              <div className="pld-col pld-col--added">Eklenme tarihi</div>
-              <div className="pld-col pld-col--dur">Süre</div>
+              <div className="pld-col pld-col--title">Title</div>
+              <div className="pld-col pld-col--album">Album</div>
+              <div className="pld-col pld-col--added">Date added</div>
+              <div className="pld-col pld-col--dur">Time</div>
             </div>
 
             {filteredTracks.map((t, i) => (
