@@ -19,14 +19,7 @@ const apiClient = axios.create({
 // Response interceptor - hata yönetimi
 apiClient.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // 401 Unauthorized hatası gelirse: Cookie geçersiz veya süresi dolmuştur.
-            // Sadece ana sayfaya (veya login'e) yönlendir.
-            window.location.href = '/';
-        }
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 // API Methods
@@ -166,7 +159,10 @@ const api = {
     getUserProfile: async () => {
         try {
             // Tarayıcı bu isteğe cookie'yi otomatik ekleyecektir.
-            const response = await apiClient.get(`/Users/profile`).catch(() => apiClient.get(`/user/profile`));
+            const response = await apiClient
+                .get(`/Users/me`)
+                .catch(() => apiClient.get(`/Users/profile`))
+                .catch(() => apiClient.get(`/user/profile`));
             return response.data;
         } catch (error) {
             console.error('User profile error:', error);

@@ -125,7 +125,7 @@ function Home() {
                             <span>{theme.theme === 'dark' ? 'Light' : 'Dark'}</span>
                         </button>
 
-                        {(!isLoggedIn || authLoading) ? (
+                        {!authLoading && !isLoggedIn ? (
                             <>
                                 <button className="auth-nav-button" onClick={() => navigate('/login')}>
                                     <LogIn size={18} />
@@ -136,7 +136,7 @@ function Home() {
                                     <span>Sign Up</span>
                                 </button>
                             </>
-                        ) : (
+                        ) : isLoggedIn ? (
                             <div className="profile-menu-wrapper">
                                 <button className="profile-button avatar-circle" onClick={handleProfileClick} aria-label="Profile menu" style={{ width: '40px', height: '40px', borderRadius: '50%', padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>
                                     {userData?.profilePictureUrl ? (
@@ -171,7 +171,7 @@ function Home() {
                                     </div>
                                 )}
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </nav>
