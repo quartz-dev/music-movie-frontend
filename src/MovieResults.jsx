@@ -11,8 +11,17 @@ function MovieResults() {
   const [searchQuery, setSearchQuery] = useState(movieName);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [movies, setMovies] = useState([]);
+  const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const toPosterUrl = (raw) => {
+    if (!raw) return null;
+    if (typeof raw === 'string' && (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:'))) return raw;
+    if (typeof raw === 'string' && raw.startsWith('/')) return `https://image.tmdb.org/t/p/w500${raw}`;
+    if (typeof raw === 'string' && !raw.includes('://') && (raw.toLowerCase().endsWith('.jpg') || raw.toLowerCase().endsWith('.png'))) return `https://image.tmdb.org/t/p/w500/${raw}`;
+    return raw;
+  };
 
   const normalizedMovies = useMemo(() => {
     const decodedTitle = decodeURIComponent(movieName || '');
@@ -22,7 +31,18 @@ function MovieResults() {
         .map((m) => ({
           id: m?.id ?? m?.movieId ?? null,
           title: m?.title ?? m?.movieTitle ?? decodedTitle,
-          posterUrl: m?.posterUrl ?? m?.posterPath ?? m?.imageUrl ?? null,
+          posterUrl: toPosterUrl(
+            m?.posterUrl ??
+            m?.PosterUrl ??
+            m?.posterPath ??
+            m?.PosterPath ??
+            m?.poster_path ??
+            m?.backdropPath ??
+            m?.backdrop_path ??
+            m?.imageUrl ??
+            m?.ImageUrl ??
+            null
+          ),
           year: m?.year ?? m?.releaseYear ?? '',
           overview: m?.overview ?? m?.description ?? '',
           genres: m?.genres ?? m?.genreNames ?? [],
@@ -42,27 +62,47 @@ function MovieResults() {
       : [];
   }, [movieName, movies]);
 
-  // Search movies
-  useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = (await api.searchMoviesFromRecommendations?.(movieName))
-          ?? (await api.searchMovies(movieName));
-        setMovies(data);
-      } catch (err) {
-        setError('Failed to fetch movies. Please try again.');
-        console.error('Error fetching movies:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    useEffect(() => {
+        const fetchMovies = async () => {
+            try {
+                setLoading(true);
+                setError(null);
 
-    if (movieName) {
-      fetchMovies();
-    }
-  }, [movieName]);
+                const data = (await api.searchMoviesFromRecommendations?.(movieName))
+                    ?? (await api.searchMovies(movieName));
+
+                console.log("Backendden Gelen Tam Veri:", data);
+
+                // BACKENDCİNİN İSTEDİĞİ AYIRMA İŞLEMİ:
+                if (data && data.movie && data.result) {
+                    // 1. Film bilgisini ayır ve listeye koy (Afişin görünmesi için)
+                    setMovies([data.movie]);
+
+                    // 2. Şarkı listesini ayır ve ayrı bir state'e koy (Müzikleri listelemek için)
+                    setSongs(data.result.data || []);
+                }
+                // Eğer backend eski sistemden (sadece liste) dönerse diye yedek plan (Fallback):
+                else if (Array.isArray(data)) {
+                    setMovies(data);
+                    setSongs([]);
+                }
+                else {
+                    setMovies([]);
+                    setSongs([]);
+                }
+
+            } catch (err) {
+                setError('Failed to fetch movies. Please try again.');
+                console.error('Error fetching movies:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (movieName) {
+            fetchMovies();
+        }
+    }, [movieName]);
 
   const handleSearch = (e) => {
     e.preventDefault();
