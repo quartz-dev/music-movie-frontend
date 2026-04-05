@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Film, User, Settings } from 'lucide-react';
 import { CSSTransition } from 'react-transition-group';
@@ -14,13 +14,42 @@ function MovieResults() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const normalizedMovies = useMemo(() => {
+    const decodedTitle = decodeURIComponent(movieName || '');
+
+    if (Array.isArray(movies) && movies.length > 0) {
+      return movies
+        .map((m) => ({
+          id: m?.id ?? m?.movieId ?? null,
+          title: m?.title ?? m?.movieTitle ?? decodedTitle,
+          posterUrl: m?.posterUrl ?? m?.posterPath ?? m?.imageUrl ?? null,
+          year: m?.year ?? m?.releaseYear ?? '',
+          overview: m?.overview ?? m?.description ?? '',
+          genres: m?.genres ?? m?.genreNames ?? [],
+        }))
+        .filter((m) => m.title);
+    }
+
+    return decodedTitle
+      ? [{
+        id: null,
+        title: decodedTitle,
+        posterUrl: null,
+        year: '',
+        overview: '',
+        genres: [],
+      }]
+      : [];
+  }, [movieName, movies]);
+
   // Search movies
   useEffect(() => {
     const fetchMovies = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await api.searchMovies(movieName);
+        const data = (await api.searchMoviesFromRecommendations?.(movieName))
+          ?? (await api.searchMovies(movieName));
         setMovies(data);
       } catch (err) {
         setError('Failed to fetch movies. Please try again.');
@@ -60,8 +89,8 @@ function MovieResults() {
     setShowProfileMenu(false);
   };
 
-  const handleMovieClick = (movieId, movieTitle) => {
-    navigate(`/movie-detail/${movieId}/${encodeURIComponent(movieTitle)}`);
+  const handleMovieClick = (movieTitle) => {
+    navigate(`/movie-detail/0/${encodeURIComponent(movieTitle)}`);
   };
 
   return (
@@ -69,7 +98,7 @@ function MovieResults() {
       <header className="results-header">
         <div className="results-header-inner">
           <div className="results-header-left">
-            <button type="button" className="results-logo" onClick={handleLogoClick}>
+            <button type="button" className="nav-button" onClick={handleLogoClick}>
               <Film size={18} />
               <span>MovieSearch</span>
             </button>
@@ -101,7 +130,7 @@ function MovieResults() {
 
           <div className="results-header-right">
             <div className="profile-menu-wrapper">
-              <button className="profile-button" onClick={handleProfileClick} aria-label="Profil menüsü">
+              <button className="nav-button" onClick={handleProfileClick} aria-label="Profile menu">
                 <User size={20} />
               </button>
 
@@ -112,11 +141,11 @@ function MovieResults() {
                 unmountOnExit
               >
                 <div className="profile-dropdown">
-                  <button className="dropdown-item" onClick={handleProfileNavigate}>
+                  <button className="nav-button results-navbar-btn--menu" onClick={handleProfileNavigate}>
                     <User size={18} />
                     <span>Profile</span>
                   </button>
-                  <button className="dropdown-item" onClick={handleSettingsNavigate}>
+                  <button className="nav-button results-navbar-btn--menu" onClick={handleSettingsNavigate}>
                     <Settings size={18} />
                     <span>Settings</span>
                   </button>
@@ -146,19 +175,19 @@ function MovieResults() {
           </div>
         )}
 
-        {!loading && !error && movies.length === 0 && (
+        {!loading && !error && normalizedMovies.length === 0 && (
           <div className="results-state">
             <p>No movies found for “{movieName}”.</p>
           </div>
         )}
 
-        {!loading && !error && movies.length > 0 && (
+        {!loading && !error && normalizedMovies.length > 0 && (
           <section className="results-grid" aria-label="Movie results">
-            {movies.map((movie) => (
+            {normalizedMovies.slice(0, 1).map((movie) => (
               <article
-                key={movie.id}
+                key={movie.id ?? movie.title}
                 className="results-card"
-                onClick={() => handleMovieClick(movie.id, movie.title)}
+                onClick={() => handleMovieClick(movie.title)}
               >
                 <div className="results-poster">
                   {movie.posterUrl ? (

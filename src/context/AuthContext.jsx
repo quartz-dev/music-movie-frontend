@@ -4,70 +4,65 @@ import api from '../services/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('authToken'));
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+    // Artık token tutmuyoruz, sadece user ve loading durumlarımız var.
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  const refreshUser = async () => {
-    const currentToken = localStorage.getItem('authToken');
-    setToken(currentToken);
+    const refreshUser = async () => {
+        try {
+            setLoading(true);
+            // Doğrudan backend'e "ben kimim?" diye soruyoruz.
+            // Tarayıcı bu isteğe sahip olduğu cookie'yi otomatik olarak ekler.
+            const res = await api.getUserProfile();
+            setUser(res?.data || res);
+        } catch {
+            // Eğer backend 401 (Unauthorized) vb. bir hata dönerse,
+            // demek ki cookie yok veya süresi dolmuş.
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    if (!currentToken) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
+    useEffect(() => {
+        refreshUser();
+    }, []);
 
-    try {
-      setLoading(true);
-      const res = await api.getUserProfile();
-      setUser(res?.data || res);
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const login = async (email, password) => {
+        // Login işlemi yapılıyor. Backend başarılı olursa browser'a 'Set-Cookie' ile cookie ekler.
+        const result = await api.login(email, password);
+        // Cookie eklendiği için artık profilimizi çekebiliriz, state'i güncelliyoruz.
+        await refreshUser();
+        return result;
+    };
 
-  useEffect(() => {
-    refreshUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const logout = async () => {
+        try {
+            // Backend'deki endpoint cookie'yi geçersiz kılacak (clear-cookie) işlemi yapar.
+            await api.logout();
+        } finally {
+            // Çıkış yapıldıktan sonra user'ı sıfırlıyoruz. (localStorage silmemize gerek kalmadı)
+            setUser(null);
+        }
+    };
 
-  const login = async (email, password) => {
-    const result = await api.login(email, password);
-    await refreshUser();
-    return result;
-  };
+    const value = useMemo(
+        () => ({
+            isLoggedIn: !!user, // Sadece 'user' objesi varsa giriş yapılmış sayılır.
+            user,
+            loading,
+            login,
+            logout,
+            refreshUser,
+        }),
+        [user, loading]
+    );
 
-  const logout = async () => {
-    try {
-      await api.logout();
-    } finally {
-      localStorage.removeItem('authToken');
-      setToken(null);
-      setUser(null);
-    }
-  };
-
-  const value = useMemo(
-    () => ({
-      token,
-      isLoggedIn: !!token,
-      user,
-      loading,
-      login,
-      logout,
-      refreshUser,
-    }),
-    [token, user, loading]
-  );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+    const ctx = useContext(AuthContext);
+    if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+    return ctx;
 }

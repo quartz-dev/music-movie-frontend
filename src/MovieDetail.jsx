@@ -1,64 +1,154 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, Music } from 'lucide-react';
+import api from './services/api';
 import './MovieDetail.css';
 
 function MovieDetail() {
   const { movieId, movieTitle } = useParams();
   const navigate = useNavigate();
 
-  // Örnek mood tagları - API'den gelecek
-  const moodTags = [
-    { name: 'Epic', emoji: '🚀' },
-    { name: 'Discovery', emoji: '🔭' },
-    { name: 'Drama', emoji: '🎭' },
-    { name: 'Emotional', emoji: '💖' },
-    { name: 'Moody', emoji: '😔' },
-    { name: 'Space', emoji: '🌌' }
-  ];
+  const titleDecoded = decodeURIComponent(movieTitle || '');
 
-  // Örnek şarkı önerileri - API'den gelecek
-  const songRecommendations = [
-    {
-      id: 1,
-      title: "Echoes",
-      artist: "Pink Floyd",
-      album: "Meddle",
-      coverUrl: null, // Placeholder
-      spotifyUrl: "#"
-    },
-    {
-      id: 2,
-      title: "Time",
-      artist: "Hans Zimmer",
-      album: "Inception OST",
-      coverUrl: null,
-      spotifyUrl: "#"
-    },
-    {
-      id: 3,
-      title: "Clair de Lune",
-      artist: "Claude Debussy",
-      album: "Suite Bergamasque",
-      coverUrl: null,
-      spotifyUrl: "#"
-    },
-    {
-      id: 4,
-      title: "Space Oddity",
-      artist: "David Bowie",
-      album: "Space Oddity",
-      coverUrl: null,
-      spotifyUrl: "#"
-    },
-    {
-      id: 5,
-      title: "To Build a Home",
-      artist: "Cinematic Orchestra",
-      album: "Ma Fleur",
-      coverUrl: null,
-      spotifyUrl: "#"
+  const toPosterUrl = (raw) => {
+    if (!raw) return null;
+    if (typeof raw === 'string' && (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:'))) return raw;
+    if (typeof raw === 'string' && raw.startsWith('/')) return `https://image.tmdb.org/t/p/w500${raw}`;
+    return raw;
+  };
+
+  const movie = {
+    id: movieId,
+    title: titleDecoded,
+    posterUrl: null,
+  };
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [moodTags, setMoodTags] = useState([]);
+  const [songRecommendations, setSongRecommendations] = useState([]);
+  const [posterUrl, setPosterUrl] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const decodedTitle = decodeURIComponent(movieTitle || '');
+
+        const res =
+          (decodedTitle ? await api.searchMoviesFromRecommendations(decodedTitle) : null) ??
+          (movieId ? await api.getMovieMoodAndSongs(movieId) : null);
+
+        if (ignore) return;
+
+        const data = res?.data ?? res;
+
+        const posterRaw =
+          data?.posterUrl ??
+          data?.PosterUrl ??
+          data?.posterPath ??
+          data?.PosterPath ??
+          data?.imageUrl ??
+          data?.ImageUrl ??
+          data?.movie?.posterUrl ??
+          data?.movie?.PosterUrl ??
+          data?.movie?.posterPath ??
+          data?.movie?.PosterPath ??
+          data?.movie?.imageUrl ??
+          data?.movie?.ImageUrl ??
+          null;
+        setPosterUrl(toPosterUrl(posterRaw));
+
+        const tags =
+          data?.moodTags ??
+          data?.MoodTags ??
+          data?.moods ??
+          data?.Moods ??
+          data?.tags ??
+          data?.Tags ??
+          data?.moodAnalysis?.tags ??
+          data?.moodAnalysis ??
+          data?.MoodAnalysis?.tags ??
+          data?.MoodAnalysis ??
+          [];
+
+        const songs =
+          (Array.isArray(data) ? data : null) ??
+          data?.songs ??
+          data?.Songs ??
+          data?.songRecommendations ??
+          data?.SongRecommendations ??
+          data?.recommendations ??
+          data?.Recommendations ??
+          data?.tracks ??
+          data?.Tracks ??
+          data?.musicSuggestions ??
+          data?.MusicSuggestions ??
+          data?.suggestions ??
+          data?.Suggestions ??
+          [];
+
+        setMoodTags(Array.isArray(tags) ? tags : []);
+        setSongRecommendations(Array.isArray(songs) ? songs : []);
+      } catch {
+        if (!ignore) {
+          setError('Failed to load recommendations.');
+          setMoodTags([]);
+          setSongRecommendations([]);
+          setPosterUrl(null);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [movieId, movieTitle]);
+
+  const normalizedMoodTags = useMemo(() => {
+    if (typeof moodTags === 'string') {
+      return moodTags
+        .split(/[,#]/g)
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((name) => ({ name, emoji: '' }));
     }
-  ];
+
+    return (Array.isArray(moodTags) ? moodTags : [])
+      .flatMap((t) => {
+        if (!t) return [];
+        if (typeof t === 'string') return [{ name: t, emoji: '' }];
+        if (typeof t === 'object' && typeof t.name === 'string') return [{ name: t.name, emoji: t.emoji ?? '' }];
+
+        const raw = t?.tag ?? t?.title ?? t?.mood ?? t?.value ?? '';
+        if (typeof raw === 'string' && raw.trim()) return [{ name: raw.trim(), emoji: t?.emoji ?? '' }];
+        return [];
+      })
+      .filter((t) => t.name);
+  }, [moodTags]);
+
+  const normalizedSongs = useMemo(() => {
+    return (Array.isArray(songRecommendations) ? songRecommendations : []).map((s) => ({
+      id: s?.id ?? s?.trackId ?? `${s?.title ?? s?.name ?? ''}-${s?.artist ?? s?.artistName ?? ''}`,
+      title: s?.title ?? s?.Title ?? s?.name ?? s?.Name ?? s?.trackName ?? s?.TrackName ?? s?.songName ?? s?.SongName ?? '',
+      artist: s?.artist ?? s?.Artist ?? s?.artistName ?? s?.ArtistName ?? s?.singer ?? s?.Singer ?? '',
+      album: s?.album ?? s?.Album ?? s?.albumName ?? s?.AlbumName ?? s?.albumTitle ?? s?.AlbumTitle ?? '',
+      coverUrl: s?.coverUrl ?? s?.imageUrl ?? s?.albumCoverUrl ?? null,
+      spotifyUrl: s?.spotifyUrl ?? s?.externalUrl ?? s?.url ?? '#',
+      previewUrl: s?.previewUrl ?? s?.preview ?? null,
+    })).filter((s) => s.title);
+  }, [songRecommendations]);
+
+  const movieView = useMemo(() => ({
+    ...movie,
+    posterUrl: posterUrl ?? movie.posterUrl,
+  }), [movie, posterUrl]);
 
   return (
     <div className="movie-detail-container">
@@ -69,22 +159,20 @@ function MovieDetail() {
       </button>
 
       {/* Main Title */}
-      <h1 className="page-main-title">
-        Discover Your Movie's Mood and Get 5 Music Recommendations
-      </h1>
+      <h1 className="page-main-title">{movieView?.title || movie?.title || ''}</h1>
 
       {/* Movie Info and Mood Analysis Section */}
       <div className="movie-mood-section">
         {/* Movie Poster */}
         <div className="movie-poster-large">
           <div className="poster-placeholder">
-            {movie?.posterUrl ? (
-              <img src={movie.posterUrl} alt={movie.title} className="poster-image" />
+            {movieView?.posterUrl ? (
+              <img src={movieView.posterUrl} alt={movieView.title} className="poster-image" />
             ) : (
               <>
                 <Music size={100} />
                 <p className="poster-movie-title">
-                  {movie?.title || decodeURIComponent(movieTitle)}
+                  {movieView?.title || decodeURIComponent(movieTitle)}
                 </p>
               </>
             )}
@@ -97,24 +185,40 @@ function MovieDetail() {
             {movie?.title || decodeURIComponent(movieTitle)} - Mood Analysis
           </h2>
           <div className="mood-tags">
-            {moodTags && moodTags.map((tag, index) => (
-              <div key={index} className="mood-tag">
-                <span className="mood-tag-text">#{tag.name}</span>
-                <span className="mood-tag-emoji">{tag.emoji}</span>
+            {normalizedMoodTags.length > 0 ? (
+              normalizedMoodTags.map((tag, index) => (
+                <div key={index} className="mood-tag">
+                  <span className="mood-tag-text">#{tag.name}</span>
+                  {tag.emoji ? <span className="mood-tag-emoji">{tag.emoji}</span> : null}
+                </div>
+              ))
+            ) : (
+              <div className="mood-tag">
+                <span className="mood-tag-text">No mood analysis available.</span>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
 
       {/* Song Recommendations Title */}
-      <h2 className="recommendations-title">
-        5 Song Recommendations Independent of This Movie, Matching Its Mood
-      </h2>
+      <h2 className="recommendations-title">Recommended songs</h2>
+
+      {loading && (
+        <div className="results-state">
+          <p>Loading recommendations...</p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="results-state">
+          <p>{error}</p>
+        </div>
+      )}
 
       {/* Song Cards Grid */}
       <div className="songs-grid">
-        {songRecommendations && songRecommendations.map((song, index) => (
+        {normalizedSongs.slice(0, 5).map((song, index) => (
           <div key={song.id} className="song-card">
             {/* Album Cover */}
             <div className="album-cover">

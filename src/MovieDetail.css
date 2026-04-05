@@ -33,11 +33,11 @@
 /* Main Title */
 .page-main-title {
     color: var(--text);
-    font-size: 44px;
+    font-size: 34px;
     font-weight: 700;
     letter-spacing: -0.03em;
     text-align: center;
-    margin: 0 auto 42px;
+    margin: 0 auto 28px;
     max-width: 32ch;
 }
 
@@ -170,11 +170,11 @@
 /* Recommendations Title */
 .recommendations-title {
     color: var(--text);
-    font-size: 34px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.02em;
     text-align: center;
-    margin: 30px auto 26px;
+    margin: 18px auto 18px;
     max-width: 42ch;
     padding: 0 var(--pad-x);
 }
