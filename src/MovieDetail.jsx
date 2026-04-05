@@ -27,7 +27,7 @@ function MovieDetail() {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [moodTags, setMoodTags] = useState([]);
+    const [movieDescription, setMovieDescription] = useState(''); // YENİ: Açıklama için state
     const [songRecommendations, setSongRecommendations] = useState([]);
     const [posterUrl, setPosterUrl] = useState(null);
 
@@ -49,11 +49,9 @@ function MovieDetail() {
 
                 const data = res?.data ?? res;
 
-                console.log("MovieDetail Gelen Veri:", data); // Hata ayıklama için bırakıyoruz
-
-                // 1. POSTER ÇEKME İŞLEMİ (Yeni yapıya göre güncellendi)
+                // 1. POSTER ÇEKME
                 const posterRaw =
-                    data?.movie?.posterPath ?? // En güvenilir kaynak olan posterPath'i başa alıyoruz
+                    data?.movie?.posterPath ??
                     data?.movie?.PosterPath ??
                     data?.movie?.posterUrl ??
                     data?.posterPath ??
@@ -64,36 +62,31 @@ function MovieDetail() {
 
                 setPosterUrl(toPosterUrl(posterRaw));
 
-                // 2. MOOD TAGS ÇEKME İŞLEMİ (Yeni yapıdaki messages dizisinden çekiyor)
-                // Eğer data.result.messages varsa oradan al, yoksa eski yerlerden ara
-                const tags =
-                    data?.result?.messages ??
-                    data?.moodTags ??
-                    data?.MoodTags ??
-                    data?.moods ??
-                    data?.Moods ??
-                    data?.tags ??
-                    data?.Tags ??
-                    data?.moodAnalysis?.tags ??
-                    data?.moodAnalysis ??
-                    [];
+                // 2. FİLM AÇIKLAMASINI ÇEKME (JSON'daki data.movie.description)
+                const description =
+                    data?.movie?.description ??
+                    data?.movie?.overview ??
+                    data?.description ??
+                    data?.overview ??
+                    'No description available.';
 
-                // 3. ŞARKILARI ÇEKME İŞLEMİ (Yeni yapıdaki result.data dizisinden çekiyor)
+                setMovieDescription(description);
+
+                // 3. ŞARKILARI ÇEKME
                 const songs =
-                    data?.result?.data ?? // Backend'in yeni döndüğü yer burası
-                    (Array.isArray(data) ? data : null) ?? // Eğer eski usül liste dönerse
+                    data?.result?.data ??
+                    (Array.isArray(data) ? data : null) ??
                     data?.songs ??
                     data?.Songs ??
                     data?.songRecommendations ??
                     [];
 
-                setMoodTags(Array.isArray(tags) ? tags : []);
                 setSongRecommendations(Array.isArray(songs) ? songs : []);
             } catch (err) {
                 console.error("Detay sayfası hata:", err);
                 if (!ignore) {
-                    setError('Failed to load recommendations.');
-                    setMoodTags([]);
+                    setError('Failed to load movie details.');
+                    setMovieDescription('No description available.');
                     setSongRecommendations([]);
                     setPosterUrl(null);
                 }
@@ -107,35 +100,12 @@ function MovieDetail() {
         };
     }, [movieId, movieTitle]);
 
-    const normalizedMoodTags = useMemo(() => {
-        if (typeof moodTags === 'string') {
-            return moodTags
-                .split(/[,#]/g)
-                .map((s) => s.trim())
-                .filter(Boolean)
-                .map((name) => ({ name, emoji: '' }));
-        }
-
-        return (Array.isArray(moodTags) ? moodTags : [])
-            .flatMap((t) => {
-                if (!t) return [];
-                if (typeof t === 'string') return [{ name: t, emoji: '' }];
-                if (typeof t === 'object' && typeof t.name === 'string') return [{ name: t.name, emoji: t.emoji ?? '' }];
-
-                const raw = t?.tag ?? t?.title ?? t?.mood ?? t?.value ?? '';
-                if (typeof raw === 'string' && raw.trim()) return [{ name: raw.trim(), emoji: t?.emoji ?? '' }];
-                return [];
-            })
-            .filter((t) => t.name);
-    }, [moodTags]);
-
     const normalizedSongs = useMemo(() => {
         return (Array.isArray(songRecommendations) ? songRecommendations : []).map((s) => ({
             id: s?.id ?? s?.trackId ?? `${s?.title ?? s?.name ?? ''}-${s?.artist ?? s?.artistName ?? ''}`,
             title: s?.title ?? s?.Title ?? s?.name ?? s?.Name ?? s?.trackName ?? s?.TrackName ?? s?.songName ?? s?.SongName ?? '',
             artist: s?.artist ?? s?.Artist ?? s?.artistName ?? s?.ArtistName ?? s?.singer ?? s?.Singer ?? '',
             album: s?.album ?? s?.Album ?? s?.albumName ?? s?.AlbumName ?? s?.albumTitle ?? s?.AlbumTitle ?? '',
-            // Şarkı kapağı için backend "albumImageUrl" dönüyor, onu buraya ekledik:
             coverUrl: s?.albumImageUrl ?? s?.coverUrl ?? s?.imageUrl ?? s?.albumCoverUrl ?? null,
             spotifyUrl: s?.spotifyUrl ?? s?.externalUrl ?? s?.url ?? '#',
             previewUrl: s?.previewUrl ?? s?.preview ?? null,
@@ -158,7 +128,7 @@ function MovieDetail() {
             {/* Main Title */}
             <h1 className="page-main-title">{movieView?.title || movie?.title || ''}</h1>
 
-            {/* Movie Info and Mood Analysis Section */}
+            {/* Movie Info and Description Section */}
             <div className="movie-mood-section">
                 {/* Movie Poster */}
                 <div className="movie-poster-large">
@@ -176,25 +146,14 @@ function MovieDetail() {
                     </div>
                 </div>
 
-                {/* Mood Analysis */}
+                {/* Movie Description Box */}
                 <div className="mood-analysis-box">
                     <h2 className="mood-analysis-title">
-                        {movie?.title || decodeURIComponent(movieTitle)} - Mood Analysis
+                        Synopsis
                     </h2>
-                    <div className="mood-tags">
-                        {normalizedMoodTags.length > 0 ? (
-                            normalizedMoodTags.map((tag, index) => (
-                                <div key={index} className="mood-tag">
-                                    {/* Etiketin başına sadece mesaj dönüyorsa # koymayabilirsin, şimdilik böyle bıraktım */}
-                                    <span className="mood-tag-text">{tag.name}</span>
-                                    {tag.emoji ? <span className="mood-tag-emoji">{tag.emoji}</span> : null}
-                                </div>
-                            ))
-                        ) : (
-                            <div className="mood-tag">
-                                <span className="mood-tag-text">No mood analysis available.</span>
-                            </div>
-                        )}
+                    {/* Tag'ler yerine direkt film açıklamasını yazdırıyoruz */}
+                    <div style={{ lineHeight: '1.6', fontSize: '1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+                        {movieDescription}
                     </div>
                 </div>
             </div>
