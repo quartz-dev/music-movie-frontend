@@ -23,7 +23,7 @@ apiClient.interceptors.response.use(
         if (error.response?.status === 401) {
             // 401 Unauthorized hatası gelirse: Cookie geçersiz veya süresi dolmuştur.
             // Sadece ana sayfaya (veya login'e) yönlendir.
-            window.location.href = '/';
+            
         }
         return Promise.reject(error);
     }
