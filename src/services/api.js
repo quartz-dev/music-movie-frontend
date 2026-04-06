@@ -3,6 +3,36 @@ import axios from 'axios';
 // Backend base URL
 const API_BASE_URL = 'https://localhost:7044/api';
 
+const inFlightRequests = new Map();
+const recommendationResponseCache = new Map();
+
+const requestOnce = (key, requestFn) => {
+    if (inFlightRequests.has(key)) {
+        return inFlightRequests.get(key);
+    }
+
+    const request = Promise.resolve()
+        .then(requestFn)
+        .finally(() => {
+            inFlightRequests.delete(key);
+        });
+
+    inFlightRequests.set(key, request);
+    return request;
+};
+
+const cacheRecommendationResponse = (key, responseData) => {
+    if (key) {
+        recommendationResponseCache.set(key, responseData);
+    }
+    return responseData;
+};
+
+const getCachedRecommendationResponse = (key) => {
+    if (!key) return null;
+    return recommendationResponseCache.get(key) ?? null;
+};
+
 // Axios instance oluştur
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
@@ -40,18 +70,18 @@ const api = {
     // Movie Search (Recommendations endpoint)
     searchMoviesFromRecommendations: async (query) => {
         try {
-            const response = await apiClient.get(`/Recommendations`, {
+            const response = await requestOnce(`recommendations:${query}`, () => apiClient.get(`/Recommendations`, {
                 params: {
                     movieTitle: query,
                 },
-            });
+            }));
 
             const data = response.data;
-            if (Array.isArray(data)) return data;
-            if (Array.isArray(data?.data)) return data.data;
-            if (Array.isArray(data?.items)) return data.items;
-            if (Array.isArray(data?.results)) return data.results;
-            return data;
+            if (Array.isArray(data)) return cacheRecommendationResponse(`recommendations:${query}`, data);
+            if (Array.isArray(data?.data)) return cacheRecommendationResponse(`recommendations:${query}`, data.data);
+            if (Array.isArray(data?.items)) return cacheRecommendationResponse(`recommendations:${query}`, data.items);
+            if (Array.isArray(data?.results)) return cacheRecommendationResponse(`recommendations:${query}`, data.results);
+            return cacheRecommendationResponse(`recommendations:${query}`, data);
         } catch (error) {
             console.error('Recommendations search error:', error);
             throw error;
@@ -72,13 +102,15 @@ const api = {
     // Movie Mood Analysis & Song Recommendations
     getMovieMoodAndSongs: async (movieId) => {
         try {
-            const response = await apiClient.get(`/movies/${movieId}/mood-songs`);
-            return response.data;
+            const response = await requestOnce(`mood-songs:${movieId}`, () => apiClient.get(`/movies/${movieId}/mood-songs`));
+            return cacheRecommendationResponse(`mood-songs:${movieId}`, response.data);
         } catch (error) {
             console.error('Mood and songs error:', error);
             throw error;
         }
     },
+
+    getCachedRecommendationResponse: (key) => getCachedRecommendationResponse(key),
 
     // Popular Movies
     getPopularMovies: async (page = 1) => {

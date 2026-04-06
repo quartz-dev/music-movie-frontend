@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, Music } from 'lucide-react';
 import api from './services/api';
 import './MovieDetail.css';
 
 function MovieDetail() {
     const { movieId, movieTitle } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
 
     const titleDecoded = decodeURIComponent(movieTitle || '');
@@ -31,15 +32,63 @@ function MovieDetail() {
     const [songRecommendations, setSongRecommendations] = useState([]);
     const [posterUrl, setPosterUrl] = useState(null);
 
+    const applyRecommendationData = (data) => {
+        const posterRaw =
+            data?.movie?.posterPath ??
+            data?.movie?.PosterPath ??
+            data?.movie?.posterUrl ??
+            data?.posterPath ??
+            data?.PosterPath ??
+            data?.posterUrl ??
+            data?.PosterUrl ??
+            null;
+
+        setPosterUrl(toPosterUrl(posterRaw));
+
+        const description =
+            data?.movie?.description ??
+            data?.movie?.overview ??
+            data?.description ??
+            data?.overview ??
+            'No description available.';
+
+        setMovieDescription(description);
+
+        const songs =
+            data?.result?.data ??
+            (Array.isArray(data) ? data : null) ??
+            data?.songs ??
+            data?.Songs ??
+            data?.songRecommendations ??
+            [];
+
+        setSongRecommendations(Array.isArray(songs) ? songs : []);
+    };
+
     useEffect(() => {
         let ignore = false;
+        const preloadedResponse = location.state?.recommendationResponse ?? null;
 
         (async () => {
             try {
                 setLoading(true);
                 setError(null);
 
+                if (preloadedResponse) {
+                    if (ignore) return;
+                    applyRecommendationData(preloadedResponse);
+                    setLoading(false);
+                    return;
+                }
+
                 const decodedTitle = decodeURIComponent(movieTitle || '');
+                const cachedResponse = api.getCachedRecommendationResponse?.(`recommendations:${decodedTitle}`);
+                if (cachedResponse) {
+                    if (ignore) return;
+                    applyRecommendationData(cachedResponse);
+                    setLoading(false);
+                    return;
+                }
 
                 const res =
                     (decodedTitle ? await api.searchMoviesFromRecommendations(decodedTitle) : null) ??
@@ -48,40 +97,7 @@ function MovieDetail() {
                 if (ignore) return;
 
                 const data = res?.data ?? res;
-
-                // 1. POSTER ÇEKME
-                const posterRaw =
-                    data?.movie?.posterPath ??
-                    data?.movie?.PosterPath ??
-                    data?.movie?.posterUrl ??
-                    data?.posterPath ??
-                    data?.PosterPath ??
-                    data?.posterUrl ??
-                    data?.PosterUrl ??
-                    null;
-
-                setPosterUrl(toPosterUrl(posterRaw));
-
-                // 2. FİLM AÇIKLAMASINI ÇEKME (JSON'daki data.movie.description)
-                const description =
-                    data?.movie?.description ??
-                    data?.movie?.overview ??
-                    data?.description ??
-                    data?.overview ??
-                    'No description available.';
-
-                setMovieDescription(description);
-
-                // 3. ŞARKILARI ÇEKME
-                const songs =
-                    data?.result?.data ??
-                    (Array.isArray(data) ? data : null) ??
-                    data?.songs ??
-                    data?.Songs ??
-                    data?.songRecommendations ??
-                    [];
-
-                setSongRecommendations(Array.isArray(songs) ? songs : []);
+                applyRecommendationData(data);
             } catch (err) {
                 console.error("Detay sayfası hata:", err);
                 if (!ignore) {
@@ -98,7 +114,7 @@ function MovieDetail() {
         return () => {
             ignore = true;
         };
-    }, [movieId, movieTitle]);
+    }, [location.state, movieId, movieTitle]);
 
     const normalizedSongs = useMemo(() => {
         return (Array.isArray(songRecommendations) ? songRecommendations : []).map((s) => ({
