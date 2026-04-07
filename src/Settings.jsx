@@ -115,11 +115,6 @@ function Settings() {
             <button className="settings-btn">Edit</button>
           </div>
         </div>
-
-        <p className="settings-note">
-          This is a sample settings page. These settings will be editable here
-          when the backend system is integrated.
-        </p>
       </div>
     </div>
   );

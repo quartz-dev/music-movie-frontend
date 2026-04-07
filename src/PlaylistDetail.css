@@ -513,6 +513,30 @@
   border: 1px solid rgba(255, 255, 255, 0.10);
 }
 
+.pld-track-cover--placeholder {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+}
+
+.pld-empty-state {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  padding: 14px;
+  text-align: center;
+}
+
+.pld-empty-state--main {
+  margin: 16px;
+}
+
+.pld-empty-state--table {
+  margin: 12px;
+}
+
 .pld-track-meta { min-width: 0; }
 
 .pld-track-title {

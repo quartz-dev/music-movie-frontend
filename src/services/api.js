@@ -5,6 +5,27 @@ const API_BASE_URL = 'https://localhost:7044/api';
 
 const inFlightRequests = new Map();
 const recommendationResponseCache = new Map();
+const RECOMMENDATION_CACHE_PREFIX = 'recommendation-cache:';
+
+const persistRecommendationCache = (key, value) => {
+    if (!key || typeof window === 'undefined') return;
+    try {
+        window.sessionStorage.setItem(`${RECOMMENDATION_CACHE_PREFIX}${key}`, JSON.stringify(value));
+    } catch {
+        // Ignore storage failures (quota/private mode)
+    }
+};
+
+const readPersistedRecommendationCache = (key) => {
+    if (!key || typeof window === 'undefined') return null;
+    try {
+        const raw = window.sessionStorage.getItem(`${RECOMMENDATION_CACHE_PREFIX}${key}`);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+};
 
 const requestOnce = (key, requestFn) => {
     if (inFlightRequests.has(key)) {
@@ -24,13 +45,19 @@ const requestOnce = (key, requestFn) => {
 const cacheRecommendationResponse = (key, responseData) => {
     if (key) {
         recommendationResponseCache.set(key, responseData);
+        persistRecommendationCache(key, responseData);
     }
     return responseData;
 };
 
 const getCachedRecommendationResponse = (key) => {
     if (!key) return null;
-    return recommendationResponseCache.get(key) ?? null;
+    const inMemory = recommendationResponseCache.get(key) ?? null;
+    if (inMemory) return inMemory;
+
+    const persisted = readPersistedRecommendationCache(key);
+    if (persisted) recommendationResponseCache.set(key, persisted);
+    return persisted ?? null;
 };
 
 // Axios instance oluştur
@@ -112,6 +139,8 @@ const api = {
 
     getCachedRecommendationResponse: (key) => getCachedRecommendationResponse(key),
 
+    cacheRecommendationResponse: (key, responseData) => cacheRecommendationResponse(key, responseData),
+
     // Popular Movies
     getPopularMovies: async (page = 1) => {
         try {
@@ -150,10 +179,20 @@ const api = {
     },
 
     // User Playlists
-    getUserPlaylists: async () => {
+    getUserPlaylists: async (userId, getPrivate = true) => {
         try {
-            const response = await apiClient.get(`/playlists`);
-            return response.data;
+            const response = userId
+                ? await apiClient.get(`/playlists/getbyuser/${userId}`, {
+                    params: {
+                        userId,
+                        getPrivate,
+                    },
+                })
+                : await apiClient.get(`/playlists`, {
+                    params: { getPrivate },
+                });
+
+            return response.data?.data ?? response.data;
         } catch (error) {
             console.error('Playlists error:', error);
             throw error;
@@ -176,10 +215,23 @@ const api = {
     // Create Playlist from Movie
     createPlaylistFromMovie: async (movieId, playlistName) => {
         try {
-            const response = await apiClient.post(`/playlists/create`, {
+            const response = await apiClient.post(`/playlists`, {
                 movieId,
                 playlistName
             });
+            return response.data;
+        } catch (error) {
+            console.error('Create playlist error:', error);
+            throw error;
+        }
+    },
+
+    createPlaylist: async (payload) => {
+        try {
+            const response = await apiClient.post(`/playlists`, payload);
+            if (response.data?.success === false) {
+                throw new Error((response.data?.messages || []).join(' ') || 'Create playlist failed');
+            }
             return response.data;
         } catch (error) {
             console.error('Create playlist error:', error);

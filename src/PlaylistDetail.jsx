@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Search, UserCircle2 } from 'lucide-react';
+import { ArrowLeft, Film, Search, UserCircle2 } from 'lucide-react';
+import api from './services/api';
+import { useAuth } from './context/AuthContext';
 import './PlaylistDetail.css';
 
 function formatTime(sec) {
@@ -11,88 +13,106 @@ function formatTime(sec) {
   return `${m}:${r}`;
 }
 
+const normalizePlaylists = (payload) => {
+  const list =
+    (Array.isArray(payload) ? payload : null) ??
+    (Array.isArray(payload?.data) ? payload.data : null) ??
+    (Array.isArray(payload?.Data) ? payload.Data : null) ??
+    (Array.isArray(payload?.result?.data) ? payload.result.data : null) ??
+    (Array.isArray(payload?.Result?.Data) ? payload.Result.Data : null) ??
+    (Array.isArray(payload?.items) ? payload.items : null) ??
+    [];
+
+  return list.map((item, index) => {
+    const movie = item?.movie ?? item?.Movie ?? null;
+    const musics =
+      (Array.isArray(item?.musics) ? item.musics : null) ??
+      (Array.isArray(item?.Musics) ? item.Musics : null) ??
+      (Array.isArray(item?.songs) ? item.songs : null) ??
+      [];
+    const name = item?.playlistName ?? item?.PlaylistName ?? item?.name ?? item?.Name ?? 'Untitled playlist';
+
+    return {
+      id: item?.id ?? item?.Id ?? item?.playlistId ?? item?.PlaylistId ?? item?.playlistID ?? `${name}-${index}`,
+      userId: item?.userId ?? item?.UserId ?? null,
+      name,
+      description: item?.description ?? item?.Description ?? null,
+      isPublic: Boolean(item?.isPublic ?? item?.IsPublic),
+      favoriteCount: item?.favoriteCount ?? item?.FavoriteCount ?? 0,
+      createdAt: item?.createdDate ?? item?.CreatedDate ?? item?.createdAt ?? item?.CreatedAt ?? null,
+      coverUrl:
+        movie?.posterUrl ??
+        movie?.PosterUrl ??
+        movie?.posterPath ??
+        movie?.PosterPath ??
+        movie?.coverUrl ??
+        movie?.CoverUrl ??
+        movie?.imageUrl ??
+        movie?.ImageUrl ??
+        item?.coverUrl ??
+        item?.CoverUrl ??
+        null,
+      owner: item?.ownerName ?? item?.OwnerName ?? item?.createdBy ?? item?.CreatedBy ?? item?.username ?? item?.userName ?? 'Unknown',
+      isDeleted: Boolean(item?.isDeleted ?? item?.IsDeleted),
+      tracks: musics.map((music, trackIndex) => ({
+        id: music?.id ?? music?.Id ?? music?.musicId ?? music?.MusicId ?? `${music?.title ?? music?.Title ?? music?.name ?? 'track'}-${trackIndex}`,
+        title: music?.title ?? music?.Title ?? music?.name ?? music?.Name ?? music?.songName ?? music?.SongName ?? 'Unknown title',
+        artist: music?.artist ?? music?.Artist ?? music?.artistName ?? music?.ArtistName ?? music?.singer ?? music?.Singer ?? 'Unknown artist',
+        album: music?.album ?? music?.Album ?? music?.albumName ?? music?.AlbumName ?? 'Unknown album',
+        addedAt: music?.addedAt ?? music?.AddedAt ?? music?.createdDate ?? music?.CreatedDate ?? music?.createdAt ?? music?.CreatedAt ?? null,
+        durationSec: Number(music?.durationSec ?? music?.DurationSec ?? music?.duration ?? music?.Duration ?? music?.durationSeconds ?? music?.DurationSeconds ?? 0),
+        coverUrl: music?.albumImageUrl ?? music?.AlbumImageUrl ?? music?.coverUrl ?? music?.CoverUrl ?? music?.imageUrl ?? music?.ImageUrl ?? null,
+      })),
+    };
+  }).filter((playlist) => !playlist.isDeleted);
+};
+
+const formatAddedDate = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString();
+};
+
 function PlaylistDetail() {
   const navigate = useNavigate();
   const { playlistId } = useParams();
+  const auth = useAuth();
   const [trackQuery, setTrackQuery] = useState('');
+  const [playlists, setPlaylists] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const playlists = useMemo(
-    () => [
-      {
-        id: '1',
-        name: 'Beğenilen Şarkılar',
-        subtitle: 'Çalma listesi • 228 şarkı',
-        coverType: 'liked',
-      },
-      {
-        id: '2',
-        name: 'Inception Soundtrack Mix',
-        subtitle: 'Çalma listesi • yener',
-        coverUrl: 'https://picsum.photos/seed/inception/400/400',
-      },
-      {
-        id: '3',
-        name: 'Sci‑Fi Classics',
-        subtitle: 'Çalma listesi • yener',
-        coverUrl: 'https://picsum.photos/seed/scifi/400/400',
-      },
-      {
-        id: '4',
-        name: 'Epic Movie Themes',
-        subtitle: 'Çalma listesi • yener',
-        coverUrl: 'https://picsum.photos/seed/epic/400/400',
-      },
-    ],
-    [],
-  );
+  useEffect(() => {
+    let ignore = false;
 
-  const playlist = playlists.find((p) => String(p.id) === String(playlistId)) ?? playlists[0];
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const userId = auth?.user?.id ?? auth?.user?.userId ?? null;
+        const data = await api.getUserPlaylists(userId, true);
+        if (!ignore) {
+          setPlaylists(normalizePlaylists(data));
+        }
+      } catch (err) {
+        console.error('Playlist detail fetch error:', err);
+        if (!ignore) {
+          setPlaylists([]);
+          setError('Failed to load playlist.');
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
 
-  const tracks = useMemo(
-    () => [
-      {
-        id: 't1',
-        title: 'Ankaradayız',
-        artist: 'Ezhel, Anıl Piyancı, Red, Keişan',
-        album: 'Sekiz',
-        addedAt: '8 Nis 2025',
-        durationSec: 282,
-        coverUrl: 'https://picsum.photos/seed/ankara/160/160',
-        previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-      },
-      {
-        id: 't2',
-        title: "İSTANBUL'UN Bİ YERİNE",
-        artist: 'Abugat',
-        album: 'COSA NOSTRA',
-        addedAt: '8 Nis 2025',
-        durationSec: 115,
-        coverUrl: 'https://picsum.photos/seed/istanbul/160/160',
-        previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-      },
-      {
-        id: 't3',
-        title: 'Kör Kurşun',
-        artist: 'Şam',
-        album: 'Vehim',
-        addedAt: '8 Nis 2025',
-        durationSec: 104,
-        coverUrl: 'https://picsum.photos/seed/kursun/160/160',
-        previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-      },
-      {
-        id: 't4',
-        title: 'Psikoz',
-        artist: 'Şam',
-        album: 'Vehim',
-        addedAt: '8 Nis 2025',
-        durationSec: 196,
-        coverUrl: 'https://picsum.photos/seed/psikoz/160/160',
-        previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-      },
-    ],
-    [],
-  );
+    return () => {
+      ignore = true;
+    };
+  }, [auth?.user?.id, auth?.user?.userId]);
+
+  const playlist = useMemo(() => playlists.find((p) => String(p.id) === String(playlistId)) ?? null, [playlists, playlistId]);
+  const tracks = playlist?.tracks ?? [];
 
   const filteredTracks = useMemo(() => {
     const q = trackQuery.trim().toLowerCase();
@@ -147,6 +167,7 @@ function PlaylistDetail() {
           </div>
 
           <div className="pld-sidebar-list" role="list">
+            {!loading && playlists.length === 0 && <div className="pld-empty-state">No playlists yet.</div>}
             {playlists.map((p) => (
               <button
                 key={p.id}
@@ -155,15 +176,15 @@ function PlaylistDetail() {
                 onClick={() => navigate(`/playlists/${p.id}`)}
               >
                 <div className="pld-side-cover" aria-hidden="true">
-                  {p.coverType === 'liked' ? (
-                    <div className="pld-liked">♥</div>
-                  ) : (
+                  {p.coverUrl ? (
                     <img src={p.coverUrl} alt="" />
+                  ) : (
+                    <div className="pld-liked"><Film size={18} /></div>
                   )}
                 </div>
                 <div className="pld-side-meta">
                   <div className="pld-side-name">{p.name}</div>
-                  <div className="pld-side-sub">{p.subtitle}</div>
+                  <div className="pld-side-sub">Playlist • {p.tracks.length} songs</div>
                 </div>
               </button>
             ))}
@@ -171,19 +192,25 @@ function PlaylistDetail() {
         </aside>
 
         <section className="pld-main">
+          {loading && <div className="pld-empty-state pld-empty-state--main">Loading playlist...</div>}
+          {!loading && error && <div className="pld-empty-state pld-empty-state--main">{error}</div>}
+          {!loading && !error && !playlist && <div className="pld-empty-state pld-empty-state--main">Playlist not found.</div>}
+
+          {playlist && (
+          <>
           <header className="pld-hero">
             <div className="pld-hero-cover" aria-hidden="true">
-              {playlist?.coverType === 'liked' ? (
-                <div className="pld-hero-liked">♥</div>
-              ) : (
+              {playlist?.coverUrl ? (
                 <img src={playlist?.coverUrl} alt="" />
+              ) : (
+                <div className="pld-hero-liked"><Film size={56} /></div>
               )}
             </div>
 
             <div className="pld-hero-meta">
-              <div className="pld-hero-type">Public Playlist</div>
+              <div className="pld-hero-type">{playlist?.isPublic ? 'Public Playlist' : 'Private Playlist'}</div>
               <h1 className="pld-hero-title">{playlist?.name}</h1>
-              <div className="pld-hero-sub">yener • {tracks.length} songs</div>
+              <div className="pld-hero-sub">{playlist?.owner} • {tracks.length} songs</div>
             </div>
           </header>
 
@@ -208,12 +235,20 @@ function PlaylistDetail() {
               <div className="pld-col pld-col--dur">Time</div>
             </div>
 
+            {!loading && filteredTracks.length === 0 && (
+              <div className="pld-empty-state pld-empty-state--table">No tracks in this playlist.</div>
+            )}
+
             {filteredTracks.map((t, i) => (
               <div key={t.id} className="pld-row" role="row">
                 <div className="pld-col pld-col--idx">{i + 1}</div>
                 <div className="pld-col pld-col--title">
                   <div className="pld-track">
-                    <img className="pld-track-cover" src={t.coverUrl} alt="" />
+                    {t.coverUrl ? (
+                      <img className="pld-track-cover" src={t.coverUrl} alt="" />
+                    ) : (
+                      <div className="pld-track-cover pld-track-cover--placeholder"><Film size={16} /></div>
+                    )}
                     <div className="pld-track-meta">
                       <div className="pld-track-title">{t.title}</div>
                       <div className="pld-track-artist">{t.artist}</div>
@@ -221,11 +256,13 @@ function PlaylistDetail() {
                   </div>
                 </div>
                 <div className="pld-col pld-col--album">{t.album}</div>
-                <div className="pld-col pld-col--added">{t.addedAt}</div>
+                <div className="pld-col pld-col--added">{formatAddedDate(t.addedAt)}</div>
                 <div className="pld-col pld-col--dur">{formatTime(t.durationSec)}</div>
               </div>
             ))}
           </div>
+          </>
+          )}
         </section>
       </main>
     </div>

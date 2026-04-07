@@ -1,13 +1,90 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Calendar, Film, Music, Clock, Sparkles, Settings } from 'lucide-react';
 import { CSSTransition } from 'react-transition-group';
 import { useAuth } from './context/AuthContext';
+import api from './services/api';
 import './Profile.css';
+
+const normalizeRecentSearches = (payload) => {
+  const list =
+    (Array.isArray(payload) ? payload : null) ??
+    (Array.isArray(payload?.data) ? payload.data : null) ??
+    (Array.isArray(payload?.result?.data) ? payload.result.data : null) ??
+    (Array.isArray(payload?.items) ? payload.items : null) ??
+    [];
+
+  return list.map((item, index) => ({
+    id: item?.id ?? item?.searchId ?? `${item?.movieTitle ?? item?.title ?? 'search'}-${index}`,
+    title: item?.movieTitle ?? item?.title ?? 'Unknown movie',
+    year: item?.year ?? item?.releaseYear ?? '',
+    searchDate: item?.searchDate ?? item?.createdDate ?? item?.createdAt ?? null,
+  }));
+};
+
+const normalizePlaylists = (payload) => {
+  const list =
+    (Array.isArray(payload) ? payload : null) ??
+    (Array.isArray(payload?.data) ? payload.data : null) ??
+    (Array.isArray(payload?.Data) ? payload.Data : null) ??
+    (Array.isArray(payload?.result?.data) ? payload.result.data : null) ??
+    (Array.isArray(payload?.Result?.Data) ? payload.Result.Data : null) ??
+    (Array.isArray(payload?.items) ? payload.items : null) ??
+    [];
+
+  return list.map((item, index) => {
+    const movie = item?.movie ?? item?.Movie ?? null;
+    const musics =
+      (Array.isArray(item?.musics) ? item.musics : null) ??
+      (Array.isArray(item?.Musics) ? item.Musics : null) ??
+      (Array.isArray(item?.songs) ? item.songs : null) ??
+      [];
+    return {
+      id:
+        item?.id ??
+        item?.Id ??
+        item?.playlistId ??
+        item?.PlaylistId ??
+        item?.playlistID ??
+        `${item?.playlistName ?? item?.PlaylistName ?? item?.name ?? item?.Name ?? 'playlist'}-${index}`,
+      name: item?.playlistName ?? item?.PlaylistName ?? item?.name ?? item?.Name ?? 'Untitled playlist',
+      songCount: item?.songCount ?? item?.SongCount ?? musics.length ?? 0,
+      movie:
+        movie?.title ??
+        movie?.Title ??
+        movie?.movieTitle ??
+        movie?.MovieTitle ??
+        item?.movieTitle ??
+        item?.MovieTitle ??
+        null,
+      duration: item?.duration ?? item?.Duration ?? null,
+      isDeleted: Boolean(item?.isDeleted ?? item?.IsDeleted),
+    };
+  }).filter((playlist) => !playlist.isDeleted);
+};
+
+const formatRelativeDate = (value) => {
+  if (!value) return 'Unknown date';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+
+  const diffMs = Date.now() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 0) return 'Today';
+  if (diffDays === 1) return '1 day ago';
+  if (diffDays < 30) return `${diffDays} days ago`;
+
+  return date.toLocaleDateString();
+};
 
 function Profile() {
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState(null);
   const auth = useAuth();
 
   const userData = auth.user;
@@ -21,37 +98,41 @@ function Profile() {
     setShowProfileMenu(false);
   };
 
-  // Sample data - real data will come from the API
-  const recentSearches = [
-    { id: 1, title: "Inception", year: 2010, searchDate: "2 days ago" },
-    { id: 2, title: "Interstellar", year: 2014, searchDate: "1 week ago" },
-    { id: 3, title: "The Dark Knight", year: 2008, searchDate: "2 weeks ago" },
-    { id: 4, title: "Pulp Fiction", year: 1994, searchDate: "1 month ago" },
-  ];
+  useEffect(() => {
+    let ignore = false;
 
-  const playlists = [
-    { 
-      id: 1, 
-      name: "Inception Soundtrack Mix", 
-      songCount: 12, 
-      duration: "48 min",
-      movie: "Inception"
-    },
-    { 
-      id: 2, 
-      name: "Sci-Fi Classics", 
-      songCount: 20, 
-      duration: "1 hr 20 min",
-      movie: "Interstellar"
-    },
-    { 
-      id: 3, 
-      name: "Epic Movie Themes", 
-      songCount: 15, 
-      duration: "58 min",
-      movie: "The Dark Knight"
-    },
-  ];
+    (async () => {
+      try {
+        setDataLoading(true);
+        setDataError(null);
+
+        const [recentResponse, playlistsResponse] = await Promise.all([
+          api.getUserRecentSearches?.(),
+          api.getUserPlaylists?.(auth?.user?.id ?? auth?.user?.userId ?? null, true),
+        ]);
+
+        if (ignore) return;
+
+        setRecentSearches(normalizeRecentSearches(recentResponse));
+        setPlaylists(normalizePlaylists(playlistsResponse));
+      } catch (err) {
+        console.error('Profile data fetch error:', err);
+        if (!ignore) {
+          setRecentSearches([]);
+          setPlaylists([]);
+          setDataError('Profile data could not be loaded.');
+        }
+      } finally {
+        if (!ignore) setDataLoading(false);
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [auth?.user?.id, auth?.user?.userId]);
+
+  const totalSongs = useMemo(() => playlists.reduce((sum, playlist) => sum + (playlist.songCount ?? 0), 0), [playlists]);
 
   return (
     <div className="profile-container">
@@ -170,7 +251,7 @@ function Profile() {
             <div className="stat-divider"></div>
             <div className="stat-item">
               <div className="stat-number">
-                {playlists.reduce((sum, p) => sum + p.songCount, 0)}
+                {totalSongs}
               </div>
               <div className="stat-label">Şarkı</div>
             </div>
@@ -205,6 +286,8 @@ function Profile() {
           </div>
 
           <div className="movies-grid">
+            {dataLoading && <p className="profile-note">Loading recent searches...</p>}
+            {!dataLoading && recentSearches.length === 0 && <p className="profile-note">No recent searches yet.</p>}
             {recentSearches.map(movie => (
               <div key={movie.id} className="movie-card">
                 <div className="movie-poster-placeholder">
@@ -213,7 +296,7 @@ function Profile() {
                 <div className="movie-info">
                   <h3 className="movie-title">{movie.title}</h3>
                   <p className="movie-year">{movie.year}</p>
-                  <p className="movie-search-date">{movie.searchDate}</p>
+                  <p className="movie-search-date">{formatRelativeDate(movie.searchDate)}</p>
                 </div>
               </div>
             ))}
@@ -230,6 +313,8 @@ function Profile() {
           </div>
 
           <div className="playlists-list">
+            {dataLoading && <p className="profile-note">Loading playlists...</p>}
+            {!dataLoading && playlists.length === 0 && <p className="profile-note">No playlists yet.</p>}
             {playlists.map(playlist => (
               <div key={playlist.id} className="playlist-card">
                 <div className="playlist-icon">
@@ -237,14 +322,18 @@ function Profile() {
                 </div>
                 <div className="playlist-info">
                   <h3 className="playlist-name">{playlist.name}</h3>
-                  <p className="playlist-source">From the movie "{playlist.movie}"</p>
+                  <p className="playlist-source">{playlist.movie ? `From the movie "${playlist.movie}"` : 'No movie attached'}</p>
                   <div className="playlist-meta">
                     <span>{playlist.songCount} songs</span>
-                    <span className="meta-dot">•</span>
-                    <span>{playlist.duration}</span>
+                    {playlist.duration && (
+                      <>
+                        <span className="meta-dot">•</span>
+                        <span>{playlist.duration}</span>
+                      </>
+                    )}
                   </div>
                 </div>
-                <button className="playlist-play-btn">
+                <button className="playlist-play-btn" onClick={() => navigate(`/playlists/${playlist.id}`)}>
                   Play
                 </button>
               </div>
@@ -252,10 +341,7 @@ function Profile() {
           </div>
         </div>
 
-        <p className="profile-note">
-          This is a sample profile page. Real user data will be shown here when
-          authentication and the movie API are integrated.
-        </p>
+        {dataError && <p className="profile-note">{dataError}</p>}
       </div>
     </div>
   );

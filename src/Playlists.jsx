@@ -1,15 +1,105 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, ChevronDown, Film, Search } from 'lucide-react';
+import api from './services/api';
+import { useAuth } from './context/AuthContext';
 import './Playlists.css';
+
+const normalizePlaylistsPayload = (payload) => {
+  const list =
+    (Array.isArray(payload) ? payload : null) ??
+    (Array.isArray(payload?.data) ? payload.data : null) ??
+    (Array.isArray(payload?.Data) ? payload.Data : null) ??
+    (Array.isArray(payload?.result?.data) ? payload.result.data : null) ??
+    (Array.isArray(payload?.Result?.Data) ? payload.Result.Data : null) ??
+    (Array.isArray(payload?.items) ? payload.items : null) ??
+    [];
+
+  return list.map((item, index) => {
+    const movie = item?.movie ?? item?.Movie ?? null;
+    const musics =
+      (Array.isArray(item?.musics) ? item.musics : null) ??
+      (Array.isArray(item?.Musics) ? item.Musics : null) ??
+      (Array.isArray(item?.songs) ? item.songs : null) ??
+      [];
+    const name = item?.playlistName ?? item?.PlaylistName ?? item?.name ?? item?.Name ?? 'Untitled playlist';
+
+    return {
+      id: item?.id ?? item?.Id ?? item?.playlistId ?? item?.PlaylistId ?? item?.playlistID ?? `${name}-${index}`,
+      userId: item?.userId ?? item?.UserId ?? null,
+      name,
+      description: item?.description ?? item?.Description ?? null,
+      movieId: item?.movieId ?? item?.MovieId ?? null,
+      movieTitle:
+        movie?.title ??
+        movie?.Title ??
+        movie?.movieTitle ??
+        movie?.MovieTitle ??
+        item?.movieTitle ??
+        item?.MovieTitle ??
+        null,
+      coverUrl:
+        movie?.posterUrl ??
+        movie?.PosterUrl ??
+        movie?.posterPath ??
+        movie?.PosterPath ??
+        movie?.coverUrl ??
+        movie?.CoverUrl ??
+        movie?.imageUrl ??
+        movie?.ImageUrl ??
+        item?.coverUrl ??
+        item?.CoverUrl ??
+        null,
+      isPublic: Boolean(item?.isPublic ?? item?.IsPublic),
+      favoriteCount: item?.favoriteCount ?? item?.FavoriteCount ?? 0,
+      createdAt: item?.createdDate ?? item?.CreatedDate ?? item?.createdAt ?? item?.CreatedAt ?? null,
+      updatedAt: item?.updatedDate ?? item?.UpdatedDate ?? item?.updatedAt ?? item?.UpdatedAt ?? null,
+      isDeleted: Boolean(item?.isDeleted ?? item?.IsDeleted),
+      songCount: item?.songCount ?? item?.SongCount ?? musics.length ?? 0,
+    };
+  }).filter((playlist) => !playlist.isDeleted);
+};
 
 function Playlists() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const auth = useAuth();
   const [sortOpen, setSortOpen] = useState(false);
   const [sortBy, setSortBy] = useState('recent');
   const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('playlists');
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab === 'movies' ? 'movies' : 'playlists');
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [playlists, setPlaylists] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const userId = auth?.user?.id ?? auth?.user?.userId ?? null;
+        const data = await api.getUserPlaylists(userId, true);
+        if (!ignore) {
+          setPlaylists(normalizePlaylistsPayload(data));
+        }
+      } catch (err) {
+        console.error('Failed to load playlists:', err);
+        if (!ignore) {
+          setPlaylists([]);
+          setError('Failed to load playlists.');
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [location.state?.refresh, auth?.user?.id, auth?.user?.userId]);
 
   const handleSearchClick = () => {
     if (query.trim()) {
@@ -21,49 +111,6 @@ function Playlists() {
     e.preventDefault();
     handleSearchClick();
   };
-
-  const playlists = [
-    {
-      id: 1,
-      name: 'Beğenilen Şarkılar',
-      movieTitle: null,
-      coverType: 'liked',
-      createdAt: '2026-03-10',
-      songCount: 228,
-    },
-    {
-      id: 2,
-      name: 'Inception Soundtrack Mix',
-      movieTitle: 'Inception',
-      coverUrl: 'https://picsum.photos/seed/inception/400/400',
-      createdAt: '2026-03-16',
-      songCount: 12,
-    },
-    {
-      id: 3,
-      name: 'Sci‑Fi Classics',
-      movieTitle: 'Interstellar',
-      coverUrl: 'https://picsum.photos/seed/scifi/400/400',
-      createdAt: '2026-02-22',
-      songCount: 20,
-    },
-    {
-      id: 4,
-      name: 'Epic Movie Themes',
-      movieTitle: 'The Dark Knight',
-      coverUrl: 'https://picsum.photos/seed/epic/400/400',
-      createdAt: '2025-12-02',
-      songCount: 15,
-    },
-    {
-      id: 5,
-      name: 'Big Boss Music',
-      movieTitle: 'Bang…',
-      coverUrl: 'https://picsum.photos/seed/bigboss/400/400',
-      createdAt: '2026-01-08',
-      songCount: 35,
-    },
-  ];
 
   const movies = useMemo(() => {
     const map = new Map();
@@ -78,7 +125,6 @@ function Playlists() {
       map.set(key, {
         title: p.movieTitle,
         coverUrl: p.coverUrl,
-        posterType: p.coverType,
         playlistCount: 1,
       });
     }
@@ -280,6 +326,10 @@ function Playlists() {
       </div>
 
       <div className="library-grid">
+        {loading && <div className="library-empty-state">Loading playlists...</div>}
+        {!loading && error && <div className="library-empty-state">{error}</div>}
+        {!loading && !error && playlists.length === 0 && <div className="library-empty-state">No playlists yet.</div>}
+
         {activeTab === 'movies' && !selectedMovie && (
           <>
             {filteredMovies.map((m) => (
@@ -349,7 +399,9 @@ function Playlists() {
                 }}
               >
                 <div className="library-cover">
-                  {p.coverType === 'liked' ? (
+                  {p.coverUrl ? (
+                    <img src={p.coverUrl} alt="" />
+                  ) : (
                     <div
                       style={{
                         width: '100%',
@@ -360,15 +412,15 @@ function Playlists() {
                           'linear-gradient(135deg, rgba(78, 46, 255, 0.9) 0%, rgba(169, 185, 255, 0.55) 100%)',
                       }}
                     >
-                      <span style={{ fontSize: 44, color: '#fff', lineHeight: 1 }}>♥</span>
+                      <Film size={44} className="results-poster-placeholder" />
                     </div>
-                  ) : (
-                    <img src={p.coverUrl} alt="" />
                   )}
                 </div>
 
                 <div className="library-card-title">{p.name}</div>
-                <p className="library-card-subtitle">{p.movieTitle || '—'}</p>
+                <p className="library-card-subtitle">
+                  {`${p.songCount} songs • ${p.isPublic ? 'Public' : 'Private'}${p.movieTitle ? ` • ${p.movieTitle}` : ''}`}
+                </p>
               </div>
             ))}
           </>
@@ -388,7 +440,9 @@ function Playlists() {
                 }}
               >
                 <div className="library-cover">
-                  {p.coverType === 'liked' ? (
+                  {p.coverUrl ? (
+                    <img src={p.coverUrl} alt="" />
+                  ) : (
                     <div
                       style={{
                         width: '100%',
@@ -399,15 +453,15 @@ function Playlists() {
                           'linear-gradient(135deg, rgba(78, 46, 255, 0.9) 0%, rgba(169, 185, 255, 0.55) 100%)',
                       }}
                     >
-                      <span style={{ fontSize: 44, color: '#fff', lineHeight: 1 }}>♥</span>
+                      <Film size={44} className="results-poster-placeholder" />
                     </div>
-                  ) : (
-                    <img src={p.coverUrl} alt="" />
                   )}
                 </div>
 
                 <div className="library-card-title">{p.name}</div>
-                <p className="library-card-subtitle">{p.movieTitle || '—'}</p>
+                <p className="library-card-subtitle">
+                  {`${p.songCount} songs • ${p.isPublic ? 'Public' : 'Private'}${p.movieTitle ? ` • ${p.movieTitle}` : ''}`}
+                </p>
               </div>
             ))}
           </>

@@ -41,6 +41,36 @@
     max-width: 32ch;
 }
 
+.save-playlist-row {
+    max-width: var(--container);
+    margin: 0 auto 20px;
+    padding: 0 var(--pad-x);
+    display: flex;
+    justify-content: center;
+}
+
+.save-playlist-button {
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.save-playlist-button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.save-playlist-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 /* Movie and Mood Section */
 .movie-mood-section {
     display: flex;
@@ -297,6 +327,108 @@
     background-color: #1ed760;
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
+}
+
+.save-playlist-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.58);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    z-index: 60;
+}
+
+.save-playlist-modal {
+    width: min(460px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 22px;
+}
+
+.save-playlist-modal-title {
+    margin: 0 0 16px;
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.save-playlist-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.save-playlist-label {
+    color: var(--text);
+    font-size: 14px;
+}
+
+.save-playlist-input {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-solid);
+    color: var(--text);
+    padding: 10px 12px;
+}
+
+.save-playlist-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.save-playlist-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.save-playlist-error {
+    margin: 0;
+    color: #f28b82;
+    font-size: 13px;
+}
+
+.save-playlist-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.save-playlist-cancel,
+.save-playlist-submit {
+    border-radius: 999px;
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.save-playlist-cancel {
+    background: var(--surface-solid);
+    color: var(--text);
+}
+
+.save-playlist-submit {
+    background: var(--accent);
+    color: #fff;
+}
+
+.save-playlist-cancel:hover,
+.save-playlist-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.save-playlist-cancel:disabled,
+.save-playlist-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 /* Responsive */
