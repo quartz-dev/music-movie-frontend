@@ -8,6 +8,7 @@ import Profile from './Profile';
 import Settings from './Settings';
 import Popular from './Popular';
 import Categories from './Categories';
+import MoviesByCategory from './MoviesByCategory';
 import Playlists from './Playlists';
 import PlaylistDetail from './PlaylistDetail';
 import { AuthProvider } from './context/AuthContext';
@@ -29,6 +30,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/popular" element={<Popular />} />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/categories/:categoryId" element={<MoviesByCategory />} />
             <Route path="/playlists" element={<Playlists />} />
             <Route path="/playlists/:playlistId" element={<PlaylistDetail />} />
           </Routes>

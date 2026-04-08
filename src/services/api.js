@@ -142,22 +142,22 @@ const api = {
     cacheRecommendationResponse: (key, responseData) => cacheRecommendationResponse(key, responseData),
 
     // Popular Movies
-    getPopularMovies: async (page = 1) => {
-        try {
-            const response = await apiClient.get(`/movies/popular`, {
-                params: { page }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Popular movies error:', error);
-            throw error;
-        }
-    },
+    // getPopularMovies: async (page = 1) => {
+    //     try {
+    //         const response = await apiClient.get(`/movies/popular`, {
+    //             params: { page }
+    //         });
+    //         return response.data;
+    //     } catch (error) {
+    //         console.error('Popular movies error:', error);
+    //         throw error;
+    //     }
+    // },
 
     // Movie Categories/Genres
     getCategories: async () => {
         try {
-            const response = await apiClient.get(`/movies/categories`);
+            const response = await apiClient.get(`/moviecategories`);
             return response.data;
         } catch (error) {
             console.error('Categories error:', error);
@@ -168,7 +168,7 @@ const api = {
     // Movies by Category
     getMoviesByCategory: async (categoryId, page = 1) => {
         try {
-            const response = await apiClient.get(`/movies/category/${categoryId}`, {
+            const response = await apiClient.get(`/movies/getmoviesbycategory/${categoryId}`, {
                 params: { page }
             });
             return response.data;
@@ -199,17 +199,22 @@ const api = {
         }
     },
 
-    // Top Public Playlists (most favorited)
-    getTopPublicPlaylists: async (limit = 10) => {
+    // Recent Public Playlists
+    getRecentPublicPlaylists: async (count = 10, getPrivate = true) => {
         try {
-            const response = await apiClient.get(`/playlists/public/top`, {
-                params: { limit }
+            const response = await apiClient.get(`/playlists/getrecent`, {
+                params: { count, getPrivate }
             });
             return response.data;
         } catch (error) {
-            console.error('Top public playlists error:', error);
+            console.error('Recent public playlists error:', error);
             throw error;
         }
+    },
+
+    // Backward-compatible alias
+    getTopPublicPlaylists: async (count = 10, getPrivate = true) => {
+        return api.getRecentPublicPlaylists(count, getPrivate);
     },
 
     // Create Playlist from Movie

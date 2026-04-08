@@ -19,8 +19,16 @@ function Home() {
 
         (async () => {
             try {
-                const data = await api.getTopPublicPlaylists?.(10);
-                if (!ignore && Array.isArray(data)) setFeaturedPlaylists(data);
+                const payload = await api.getRecentPublicPlaylists(10, true);
+
+                const playlists =
+                    (Array.isArray(payload) ? payload : null) ??
+                    (Array.isArray(payload?.data) ? payload.data : null) ??
+                    (Array.isArray(payload?.Data) ? payload.Data : null) ??
+                    (Array.isArray(payload?.items) ? payload.items : null) ??
+                    [];
+
+                if (!ignore) setFeaturedPlaylists(playlists.slice(0, 10));
             } catch {
                 if (!ignore) setFeaturedPlaylists([]);
             }
@@ -201,8 +209,8 @@ function Home() {
                     <section className="featured">
                         <div className="featured-frame">
                             <div className="featured-floating">
-                                <h2 className="featured-title">Community favorites</h2>
-                                <p className="featured-subtitle">The most saved public playlists — curated by people, not algorithms.</p>
+                                <h2 className="featured-title">Recent playlists</h2>
+                                <p className="featured-subtitle">The latest 10 public playlists shared by the community.</p>
                             </div>
                             <div className="featured-row" role="list">
                                 {featuredPlaylists.map((pl) => (
