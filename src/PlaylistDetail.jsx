@@ -31,6 +31,23 @@ const normalizePlaylists = (payload) => {
       (Array.isArray(item?.songs) ? item.songs : null) ??
       [];
     const name = item?.playlistName ?? item?.PlaylistName ?? item?.name ?? item?.Name ?? 'Untitled playlist';
+    const rawCoverUrl =
+      movie?.posterPath ??
+      movie?.PosterPath ??
+      movie?.posterUrl ??
+      movie?.PosterUrl ??
+      movie?.coverUrl ??
+      movie?.CoverUrl ??
+      movie?.imageUrl ??
+      movie?.ImageUrl ??
+      item?.coverUrl ??
+      item?.CoverUrl ??
+      null;
+
+    const coverUrl =
+      typeof rawCoverUrl === 'string' && rawCoverUrl.includes('https://image.tmdb.org/t/p/w500https://')
+        ? rawCoverUrl.replace('https://image.tmdb.org/t/p/w500https://', 'https://')
+        : rawCoverUrl;
 
     return {
       id: item?.id ?? item?.Id ?? item?.playlistId ?? item?.PlaylistId ?? item?.playlistID ?? `${name}-${index}`,
@@ -40,18 +57,7 @@ const normalizePlaylists = (payload) => {
       isPublic: Boolean(item?.isPublic ?? item?.IsPublic),
       favoriteCount: item?.favoriteCount ?? item?.FavoriteCount ?? 0,
       createdAt: item?.createdDate ?? item?.CreatedDate ?? item?.createdAt ?? item?.CreatedAt ?? null,
-      coverUrl:
-        movie?.posterUrl ??
-        movie?.PosterUrl ??
-        movie?.posterPath ??
-        movie?.PosterPath ??
-        movie?.coverUrl ??
-        movie?.CoverUrl ??
-        movie?.imageUrl ??
-        movie?.ImageUrl ??
-        item?.coverUrl ??
-        item?.CoverUrl ??
-        null,
+      coverUrl,
       owner: item?.ownerName ?? item?.OwnerName ?? item?.createdBy ?? item?.CreatedBy ?? item?.username ?? item?.userName ?? 'Unknown',
       isDeleted: Boolean(item?.isDeleted ?? item?.IsDeleted),
       tracks: musics.map((music, trackIndex) => ({
@@ -91,9 +97,16 @@ function PlaylistDetail() {
         setLoading(true);
         setError(null);
         const userId = auth?.user?.id ?? auth?.user?.userId ?? null;
-        const data = await api.getUserPlaylists(userId, true);
+        const [userData, recentData] = await Promise.all([
+          api.getUserPlaylists(userId, true),
+          api.getRecentPublicPlaylists(20, false),
+        ]);
+
+        const merged = [...normalizePlaylists(userData), ...normalizePlaylists(recentData)];
+        const unique = Array.from(new Map(merged.map((playlist) => [String(playlist.id), playlist])).values());
+
         if (!ignore) {
-          setPlaylists(normalizePlaylists(data));
+          setPlaylists(unique);
         }
       } catch (err) {
         console.error('Playlist detail fetch error:', err);

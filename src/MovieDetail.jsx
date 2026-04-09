@@ -310,7 +310,7 @@ function MovieDetail() {
                         Synopsis
                     </h2>
                     {/* Tag'ler yerine direkt film açıklamasını yazdırıyoruz */}
-                    <div style={{ lineHeight: '1.6', fontSize: '1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+                    <div style={{ lineHeight: '1.6', fontSize: '1rem' }}>
                         {movieDescription}
                     </div>
                 </div>

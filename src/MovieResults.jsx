@@ -1,13 +1,17 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Search, Film, User, Settings } from 'lucide-react';
+import { Search, Film, User, Settings, Sun, Moon } from 'lucide-react';
+import { useTheme } from './hooks/useTheme';
 import { CSSTransition } from 'react-transition-group';
 import api from './services/api';
 import './MovieResults.css';
+import './App.css';
+
 
 function MovieResults() {
   const { movieName } = useParams();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState(movieName);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [movies, setMovies] = useState([]);
@@ -143,7 +147,7 @@ function MovieResults() {
           <div className="results-header-left">
             <button type="button" className="nav-button" onClick={handleLogoClick}>
               <Film size={18} />
-              <span>MovieSearch</span>
+              <span><strong>Ostia</strong></span>
             </button>
           </div>
 
@@ -172,28 +176,35 @@ function MovieResults() {
           </div>
 
           <div className="results-header-right">
+            <button
+
+                            style={{ marginRight: '10px' }}
+                            type="button"
+                            className="nav-button"
+                            onClick={theme.toggleTheme}
+                            aria-label="Toggle theme"
+                            title={theme.theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                        >
+                            {theme.theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                            <span>{theme.theme === 'dark' ? 'Light' : 'Dark'}</span>
+                        </button>
             <div className="profile-menu-wrapper">
               <button className="nav-button" onClick={handleProfileClick} aria-label="Profile menu">
                 <User size={20} />
               </button>
 
-              <CSSTransition
-                in={showProfileMenu}
-                timeout={180}
-                classNames="menu"
-                unmountOnExit
-              >
-                <div className="profile-dropdown">
-                  <button className="nav-button results-navbar-btn--menu" onClick={handleProfileNavigate}>
-                    <User size={18} />
-                    <span>Profile</span>
-                  </button>
-                  <button className="nav-button results-navbar-btn--menu" onClick={handleSettingsNavigate}>
-                    <Settings size={18} />
-                    <span>Settings</span>
-                  </button>
-                </div>
-              </CSSTransition>
+              {showProfileMenu && (
+                                    <div className="profile-dropdown">
+                                        <button className="dropdown-item" onClick={handleProfileNavigate}>
+                                            <User size={18} />
+                                            <span>Profile</span>
+                                        </button>
+                                        <button className="dropdown-item" onClick={handleSettingsNavigate}>
+                                            <Settings size={18} />
+                                            <span>Settings</span>
+                                        </button>
+                                    </div>
+                                )}
             </div>
           </div>
         </div>

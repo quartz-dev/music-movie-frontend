@@ -136,7 +136,7 @@ function MoviesByCategory() {
               <article
                 key={movie.id}
                 className="category-movie-card"
-                onClick={() => navigate(`/movie-detail/${movie.id ?? 0}/${encodeURIComponent(movie.title)}`)}
+                onClick={() => navigate(`/movie/${movie.title ?? 0}`)}
               >
                 <div className="category-movie-poster">
                   {movie.posterUrl ? (

@@ -223,7 +223,7 @@ function Playlists() {
         <div className="library-tabs" role="tablist" aria-label="Library filters">
           <button className="nav-button" type="button" onClick={() => navigate('/')} aria-label="Go to Home">
             <Film size={18} />
-            <span>Home</span>
+            <span><strong>Ostia</strong></span>
           </button>
 
           <button

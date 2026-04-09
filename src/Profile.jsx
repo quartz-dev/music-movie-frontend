@@ -151,7 +151,6 @@ function Profile() {
           <div className="profile-menu-wrapper">
             <button 
               className="profile-button avatar-circle"
-              onClick={handleProfileClick}
               aria-label="Profile menu"
               style={{ width: '40px', height: '40px', borderRadius: '50%', padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--accent)', color: 'white', fontWeight: 'bold' }}
             >
@@ -172,33 +171,7 @@ function Profile() {
               )}
             </button>
 
-            {/* Dropdown Menü */}
-            <CSSTransition
-              in={showProfileMenu}
-              timeout={180}
-              classNames="menu"
-              unmountOnExit
-            >
-              <div className="profile-dropdown">
-                <button
-                  className="dropdown-item"
-                  onClick={() => {
-                    setShowProfileMenu(false);
-                    // Zaten profil sayfasındayız
-                  }}
-                >
-                  <User size={18} />
-                  <span>Profile</span>
-                </button>
-                <button
-                  className="dropdown-item"
-                  onClick={handleSettingsNavigate}
-                >
-                  <Settings size={18} />
-                  <span>Settings</span>
-                </button>
-              </div>
-            </CSSTransition>
+            
           </div>
         </div>
       </div>
@@ -247,14 +220,7 @@ function Profile() {
             <div className="stat-item">
               <div className="stat-number">{playlists.length}</div>
               <div className="stat-label">Playlist</div>
-            </div>
-            <div className="stat-divider"></div>
-            <div className="stat-item">
-              <div className="stat-number">
-                {totalSongs}
-              </div>
-              <div className="stat-label">Şarkı</div>
-            </div>
+            </div>           
           </div>
 
           <div className="profile-info">
