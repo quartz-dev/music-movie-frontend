@@ -60,6 +60,27 @@ const getCachedRecommendationResponse = (key) => {
     return persisted ?? null;
 };
 
+const clearClientCaches = () => {
+    inFlightRequests.clear();
+    recommendationResponseCache.clear();
+
+    if (typeof window === 'undefined') return;
+
+    try {
+        const keysToRemove = [];
+        for (let index = 0; index < window.sessionStorage.length; index += 1) {
+            const key = window.sessionStorage.key(index);
+            if (key && key.startsWith(RECOMMENDATION_CACHE_PREFIX)) {
+                keysToRemove.push(key);
+            }
+        }
+
+        keysToRemove.forEach((key) => window.sessionStorage.removeItem(key));
+    } catch {
+        // Ignore storage access issues
+    }
+};
+
 // Axios instance oluştur
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
@@ -146,6 +167,8 @@ const api = {
     getCachedRecommendationResponse: (key) => getCachedRecommendationResponse(key),
 
     cacheRecommendationResponse: (key, responseData) => cacheRecommendationResponse(key, responseData),
+
+    clearClientCaches,
 
     // Popular Movies
     // getPopularMovies: async (page = 1) => {
@@ -246,6 +269,19 @@ const api = {
             return response.data;
         } catch (error) {
             console.error('Create playlist error:', error);
+            throw error;
+        }
+    },
+
+    addToExistingPlaylist: async (playlistId, payload) => {
+        try {
+            const response = await apiClient.post(`/playlists/addexisting/${playlistId}`, payload);
+            if (response.data?.success === false) {
+                throw new Error((response.data?.messages || []).join(' ') || 'Add to existing playlist failed');
+            }
+            return response.data;
+        } catch (error) {
+            console.error('Add to existing playlist error:', error);
             throw error;
         }
     },

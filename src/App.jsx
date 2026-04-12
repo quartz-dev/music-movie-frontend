@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import Login from './Login';
 import Register from './Register';
-import MovieResults from './MovieResults';
 import MovieDetail from './MovieDetail';
 import Profile from './Profile';
 import Settings from './Settings';
@@ -24,7 +23,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/movie/:movieName" element={<MovieResults />} />
+            <Route path="/movie/:movieTitle" element={<MovieDetail />} />
             <Route path="/movie-detail/:movieId/:movieTitle" element={<MovieDetail />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import './Auth.css';
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const auth = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -14,6 +15,28 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const resolveLoginErrorMessage = (err) => {
+    const responseData = err?.response?.data;
+
+    if (Array.isArray(responseData?.messages) && responseData.messages.length > 0) {
+      return responseData.messages.join(' ');
+    }
+
+    if (typeof responseData?.message === 'string' && responseData.message.trim()) {
+      return responseData.message;
+    }
+
+    if (typeof responseData?.title === 'string' && responseData.title.trim()) {
+      return responseData.title;
+    }
+
+    if (err?.response?.status === 401) {
+      return 'Unauthorized request. Please try logging in again.';
+    }
+
+    return 'Login failed. Please check your credentials.';
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -31,12 +54,12 @@ function Login() {
     try {
       const response = await auth.login(formData.email, formData.password);
       console.log('Login successful:', response);
-      
-      // Redirect to home page
-      navigate('/');
+
+      const redirectTo = typeof location.state?.from === 'string' ? location.state.from : '/';
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      setError(resolveLoginErrorMessage(err));
     } finally {
       setLoading(false);
     }

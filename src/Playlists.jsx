@@ -74,7 +74,27 @@ function Playlists() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!auth.loading && !auth.isLoggedIn) {
+      navigate('/login', {
+        replace: true,
+        state: {
+          from: `${location.pathname}${location.search}${location.hash}`,
+        },
+      });
+    }
+  }, [auth.loading, auth.isLoggedIn, location.pathname, location.search, location.hash, navigate]);
+
+  useEffect(() => {
     let ignore = false;
+
+    if (auth.loading) return;
+
+    if (!auth.isLoggedIn) {
+      setPlaylists([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
 
     (async () => {
       try {
@@ -99,7 +119,7 @@ function Playlists() {
     return () => {
       ignore = true;
     };
-  }, [location.state?.refresh, auth?.user?.id, auth?.user?.userId]);
+  }, [location.state?.refresh, auth.loading, auth.isLoggedIn, auth?.user?.id, auth?.user?.userId]);
 
   const handleSearchClick = () => {
     if (query.trim()) {
