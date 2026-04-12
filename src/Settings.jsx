@@ -29,8 +29,8 @@ function Settings() {
         <div className="profile-menu-wrapper">
           <button 
             className="profile-button"
-            onClick={handleProfileClick}
-              aria-label="Profile menu"
+            onClick={() => navigate('/profile')}
+            aria-label="Profile menu"
           >
             <User size={20} />
           </button>
@@ -115,11 +115,6 @@ function Settings() {
             <button className="settings-btn">Edit</button>
           </div>
         </div>
-
-        <p className="settings-note">
-          This is a sample settings page. These settings will be editable here
-          when the backend system is integrated.
-        </p>
       </div>
     </div>
   );

@@ -598,6 +598,16 @@
   align-content: start;
 }
 
+.library-empty-state {
+  grid-column: 1 / -1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--muted);
+  padding: 18px;
+  text-align: center;
+}
+
 @media (min-width: 1200px) {
   .library-grid {
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));

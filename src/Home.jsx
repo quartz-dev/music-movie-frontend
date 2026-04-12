@@ -6,6 +6,70 @@ import { useTheme } from './hooks/useTheme';
 import api from './services/api';
 import './App.css';
 
+const normalizeRecentPlaylists = (payload) => {
+    const list =
+        (Array.isArray(payload) ? payload : null) ??
+        (Array.isArray(payload?.data) ? payload.data : null) ??
+        (Array.isArray(payload?.Data) ? payload.Data : null) ??
+        (Array.isArray(payload?.result?.data) ? payload.result.data : null) ??
+        (Array.isArray(payload?.Result?.Data) ? payload.Result.Data : null) ??
+        (Array.isArray(payload?.items) ? payload.items : null) ??
+        [];
+
+    return list.map((item, index) => {
+        const movie = item?.movie ?? item?.Movie ?? null;
+        const musics =
+            (Array.isArray(item?.musics) ? item.musics : null) ??
+            (Array.isArray(item?.Musics) ? item.Musics : null) ??
+            (Array.isArray(item?.songs) ? item.songs : null) ??
+            [];
+
+        const rawPoster =
+            movie?.posterPath ??
+            movie?.PosterPath ??
+            movie?.posterUrl ??
+            movie?.PosterUrl ??
+            movie?.coverUrl ??
+            movie?.CoverUrl ??
+            movie?.imageUrl ??
+            movie?.ImageUrl ??
+            item?.coverImageUrl ??
+            item?.coverUrl ??
+            item?.CoverUrl ??
+            null;
+
+        const coverImageUrl =
+            typeof rawPoster === 'string' && rawPoster.includes('https://image.tmdb.org/t/p/w500https://')
+                ? rawPoster.replace('https://image.tmdb.org/t/p/w500https://', 'https://')
+                : rawPoster;
+
+        return {
+            id: item?.id ?? item?.Id ?? item?.playlistId ?? item?.PlaylistId ?? `${index}`,
+            playlistName: item?.playlistName ?? item?.PlaylistName ?? item?.name ?? item?.Name ?? 'Playlist',
+            ownerName: item?.ownerName ?? item?.OwnerName ?? item?.createdBy ?? item?.CreatedBy ?? item?.userName ?? item?.username ?? 'Community',
+            favoritesCount: item?.favoriteCount ?? item?.FavoriteCount ?? item?.favoritesCount ?? item?.favCount ?? 0,
+            coverImageUrl,
+            movie: {
+                id: movie?.id ?? movie?.Id ?? item?.movieId ?? item?.MovieId ?? null,
+                title: movie?.title ?? movie?.Title ?? item?.movieTitle ?? item?.MovieTitle ?? null,
+            },
+            tracksPreview: musics.map((music, trackIndex) => {
+                const durationMs = Number(music?.durationMs ?? music?.DurationMs ?? 0);
+                const totalSeconds = Number.isFinite(durationMs) ? Math.floor(durationMs / 1000) : 0;
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = String(totalSeconds % 60).padStart(2, '0');
+
+                return {
+                    id: music?.id ?? music?.Id ?? `${index}-${trackIndex}`,
+                    title: music?.name ?? music?.Name ?? music?.title ?? music?.Title ?? `Track ${trackIndex + 1}`,
+                    artist: music?.artistName ?? music?.ArtistName ?? music?.artist ?? music?.Artist ?? 'Artist',
+                    duration: totalSeconds > 0 ? `${minutes}:${seconds}` : '',
+                };
+            }),
+        };
+    });
+};
+
 function Home() {
     const [query, setQuery] = useState('');
     const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -19,8 +83,11 @@ function Home() {
 
         (async () => {
             try {
-                const data = await api.getTopPublicPlaylists?.(10);
-                if (!ignore && Array.isArray(data)) setFeaturedPlaylists(data);
+                const payload = await api.getRecentPublicPlaylists(10, false);
+
+                const playlists = normalizeRecentPlaylists(payload);
+
+                if (!ignore) setFeaturedPlaylists(playlists.slice(0, 10));
             } catch {
                 if (!ignore) setFeaturedPlaylists([]);
             }
@@ -100,10 +167,10 @@ function Home() {
                                 <span>Profile</span>
                             </button>
                         )}
-                        <button className="nav-button" onClick={() => navigate('/popular')}>
+                        {/* <button className="nav-button" onClick={() => navigate('/popular')}>
                             <TrendingUp size={18} />
                             <span>Popular</span>
-                        </button>
+                        </button> */}
                         <button className="nav-button" onClick={() => navigate('/categories')}>
                             <Grid size={18} />
                             <span>Categories</span>
@@ -125,7 +192,7 @@ function Home() {
                             <span>{theme.theme === 'dark' ? 'Light' : 'Dark'}</span>
                         </button>
 
-                        {(!isLoggedIn || authLoading) ? (
+                        {!authLoading && !isLoggedIn ? (
                             <>
                                 <button className="auth-nav-button" onClick={() => navigate('/login')}>
                                     <LogIn size={18} />
@@ -136,7 +203,7 @@ function Home() {
                                     <span>Sign Up</span>
                                 </button>
                             </>
-                        ) : (
+                        ) : isLoggedIn ? (
                             <div className="profile-menu-wrapper">
                                 <button className="profile-button avatar-circle" onClick={handleProfileClick} aria-label="Profile menu" style={{ width: '40px', height: '40px', borderRadius: '50%', padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>
                                     {userData?.profilePictureUrl ? (
@@ -171,7 +238,7 @@ function Home() {
                                     </div>
                                 )}
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </nav>
@@ -201,17 +268,17 @@ function Home() {
                     <section className="featured">
                         <div className="featured-frame">
                             <div className="featured-floating">
-                                <h2 className="featured-title">Community favorites</h2>
-                                <p className="featured-subtitle">The most saved public playlists — curated by people, not algorithms.</p>
+                                <h2 className="featured-title">Recent playlists</h2>
+                                <p className="featured-subtitle">The latest 10 public playlists shared by the community.</p>
                             </div>
                             <div className="featured-row" role="list">
                                 {featuredPlaylists.map((pl) => (
                                     <button
-                                        key={pl.id ?? pl.playlistId ?? pl.name}
+                                        key={pl.id ?? pl.playlistName}
                                         type="button"
                                         role="listitem"
-                                        className={`featured-card ${((pl.favoritesCount ?? pl.favCount ?? 0) % 2 === 0) ? 'is-accent2' : 'is-accent'}`}
-                                        onClick={() => navigate(`/playlists`)}
+                                        className={`featured-card ${((pl.favoritesCount ?? 0) % 2 === 0) ? 'is-accent2' : 'is-accent'}`}
+                                        onClick={() => navigate(`/playlists/${pl.id}`, { state: { playlist: pl } })}
                                         onPointerMove={setCardTilt}
                                         onPointerLeave={resetCardTilt}
                                         onPointerCancel={resetCardTilt}
@@ -226,12 +293,13 @@ function Home() {
                                             </div>
 
                                             <div className="pl-head">
-                                                <div className="pl-title" title={pl.name ?? pl.playlistName ?? 'Playlist'}>
-                                                    {pl.name ?? pl.playlistName ?? 'Playlist'}
+                                                <div className="pl-title" title={pl.playlistName ?? 'Playlist'}>
+                                                    {pl.playlistName ?? 'Playlist'}
                                                 </div>
                                                 <div className="pl-owner">
-                                                    {pl.ownerName ?? pl.createdBy ?? pl.userName ?? 'Community'}
-                                                    {typeof (pl.favoritesCount ?? pl.favCount) === 'number' ? ` • ${pl.favoritesCount ?? pl.favCount} fav` : ''}
+                                                    {pl.ownerName ?? 'Community'}
+                                                    {pl.movie?.title ? ` • ${pl.movie.title}` : ''}
+                                                    {typeof pl.favoritesCount === 'number' ? ` • ${pl.favoritesCount} fav` : ''}
                                                 </div>
 
                                                 <div className="pl-actions">
@@ -251,7 +319,7 @@ function Home() {
                                         </div>
 
                                         <div className="pl-preview" aria-hidden="true">
-                                            {(Array.isArray(pl.tracksPreview) ? pl.tracksPreview : [
+                                            {(Array.isArray(pl.tracksPreview) && pl.tracksPreview.length > 0 ? pl.tracksPreview : [
                                                 { title: 'Track', artist: 'Artist', duration: '03:12' },
                                                 { title: 'Track', artist: 'Artist', duration: '02:48' },
                                                 { title: 'Track', artist: 'Artist', duration: '03:35' },

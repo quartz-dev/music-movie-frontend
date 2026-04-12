@@ -1,12 +1,55 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, Music } from 'lucide-react';
 import api from './services/api';
+import { useAuth } from './context/AuthContext';
 import './MovieDetail.css';
+
+const extractSongsFromRecommendation = (data) => {
+    const songs =
+        data?.result?.data ??
+        data?.data?.result?.data ??
+        data?.data?.songs ??
+        data?.data?.songRecommendations ??
+        data?.musics ??
+        data?.data?.musics ??
+        (Array.isArray(data) ? data : null) ??
+        (Array.isArray(data?.data) ? data.data : null) ??
+        data?.songs ??
+        data?.Songs ??
+        data?.songRecommendations ??
+        [];
+
+    return Array.isArray(songs) ? songs : [];
+};
+
+const extractMovieFromRecommendation = (data) => {
+    return (
+        data?.movie ??
+        data?.data?.movie ??
+        data?.result?.movie ??
+        data?.data?.result?.movie ??
+        null
+    );
+};
+
+const extractMovieIdFromRecommendation = (data, fallbackMovieId) => {
+    const movie = extractMovieFromRecommendation(data);
+    return movie?.id ?? movie?.movieId ?? fallbackMovieId ?? null;
+};
+
+const extractMusicIdsFromRecommendation = (data) => {
+    const songs = extractSongsFromRecommendation(data);
+    return songs
+        .map((music) => music?.id ?? music?.musicId ?? music?.trackId ?? null)
+        .filter((id) => id != null && id !== '');
+};
 
 function MovieDetail() {
     const { movieId, movieTitle } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    const auth = useAuth();
 
     const titleDecoded = decodeURIComponent(movieTitle || '');
 
@@ -30,16 +73,71 @@ function MovieDetail() {
     const [movieDescription, setMovieDescription] = useState(''); // YENİ: Açıklama için state
     const [songRecommendations, setSongRecommendations] = useState([]);
     const [posterUrl, setPosterUrl] = useState(null);
+    const [recommendationData, setRecommendationData] = useState(null);
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [playlistName, setPlaylistName] = useState('');
+    const [playlistDescription, setPlaylistDescription] = useState('');
+    const [isPublic, setIsPublic] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
+    const [saveError, setSaveError] = useState(null);
+
+    const applyRecommendationData = (data) => {
+        setRecommendationData(data ?? null);
+
+        const posterRaw =
+            data?.movie?.posterPath ??
+            data?.movie?.PosterPath ??
+            data?.movie?.posterUrl ??
+            data?.posterPath ??
+            data?.PosterPath ??
+            data?.posterUrl ??
+            data?.PosterUrl ??
+            null;
+
+        setPosterUrl(toPosterUrl(posterRaw));
+
+        const description =
+            data?.movie?.description ??
+            data?.movie?.overview ??
+            data?.description ??
+            data?.overview ??
+            'No description available.';
+
+        setMovieDescription(description);
+
+        const songs = extractSongsFromRecommendation(data);
+
+        setSongRecommendations(Array.isArray(songs) ? songs : []);
+    };
 
     useEffect(() => {
         let ignore = false;
+        const preloadedResponse = location.state?.recommendationResponse ?? null;
 
         (async () => {
             try {
                 setLoading(true);
                 setError(null);
 
+                if (preloadedResponse) {
+                    const decodedTitle = decodeURIComponent(movieTitle || '');
+                    if (decodedTitle) {
+                        api.cacheRecommendationResponse?.(`recommendations:${decodedTitle}`, preloadedResponse);
+                    }
+                    if (ignore) return;
+                    applyRecommendationData(preloadedResponse);
+                    setLoading(false);
+                    return;
+                }
+
                 const decodedTitle = decodeURIComponent(movieTitle || '');
+                const cachedResponse = api.getCachedRecommendationResponse?.(`recommendations:${decodedTitle}`);
+                if (cachedResponse) {
+                    if (ignore) return;
+                    applyRecommendationData(cachedResponse);
+                    setLoading(false);
+                    return;
+                }
 
                 const res =
                     (decodedTitle ? await api.searchMoviesFromRecommendations(decodedTitle) : null) ??
@@ -48,40 +146,7 @@ function MovieDetail() {
                 if (ignore) return;
 
                 const data = res?.data ?? res;
-
-                // 1. POSTER ÇEKME
-                const posterRaw =
-                    data?.movie?.posterPath ??
-                    data?.movie?.PosterPath ??
-                    data?.movie?.posterUrl ??
-                    data?.posterPath ??
-                    data?.PosterPath ??
-                    data?.posterUrl ??
-                    data?.PosterUrl ??
-                    null;
-
-                setPosterUrl(toPosterUrl(posterRaw));
-
-                // 2. FİLM AÇIKLAMASINI ÇEKME (JSON'daki data.movie.description)
-                const description =
-                    data?.movie?.description ??
-                    data?.movie?.overview ??
-                    data?.description ??
-                    data?.overview ??
-                    'No description available.';
-
-                setMovieDescription(description);
-
-                // 3. ŞARKILARI ÇEKME
-                const songs =
-                    data?.result?.data ??
-                    (Array.isArray(data) ? data : null) ??
-                    data?.songs ??
-                    data?.Songs ??
-                    data?.songRecommendations ??
-                    [];
-
-                setSongRecommendations(Array.isArray(songs) ? songs : []);
+                applyRecommendationData(data);
             } catch (err) {
                 console.error("Detay sayfası hata:", err);
                 if (!ignore) {
@@ -98,7 +163,7 @@ function MovieDetail() {
         return () => {
             ignore = true;
         };
-    }, [movieId, movieTitle]);
+    }, [location.state, movieId, movieTitle]);
 
     const normalizedSongs = useMemo(() => {
         return (Array.isArray(songRecommendations) ? songRecommendations : []).map((s) => ({
@@ -117,6 +182,88 @@ function MovieDetail() {
         posterUrl: posterUrl ?? movie.posterUrl,
     }), [movie, posterUrl]);
 
+    const openSaveModal = () => {
+        setPlaylistName((movieView?.title || titleDecoded || 'My Playlist').trim() ? `${(movieView?.title || titleDecoded || 'My Playlist').trim()} Playlist` : 'My Playlist');
+        setPlaylistDescription(movieDescription || '');
+        setIsPublic(false);
+        setSaveError(null);
+        setShowSaveModal(true);
+    };
+
+    const closeSaveModal = () => {
+        if (saveLoading) return;
+        setShowSaveModal(false);
+    };
+
+    const handleSaveToPlaylist = async (e) => {
+        e.preventDefault();
+        const name = playlistName.trim();
+
+        if (!name) {
+            setSaveError('Playlist name is required.');
+            return;
+        }
+
+        const userId = auth?.user?.id ?? auth?.user?.userId ?? null;
+        if (!userId) {
+            setSaveError('Please log in to save playlists.');
+            return;
+        }
+
+        let sourceData = recommendationData ?? api.getCachedRecommendationResponse?.(`recommendations:${titleDecoded}`) ?? null;
+
+        if (!extractMovieFromRecommendation(sourceData) || extractSongsFromRecommendation(sourceData).length === 0) {
+            try {
+                const refreshedResponse =
+                    (titleDecoded ? await api.searchMoviesFromRecommendations(titleDecoded) : null) ??
+                    (movieId ? await api.getMovieMoodAndSongs(movieId) : null);
+                sourceData = refreshedResponse?.data ?? refreshedResponse ?? sourceData;
+            } catch {
+                // Keep existing sourceData and fallback model below
+            }
+        }
+
+        const resolvedMovieId = extractMovieIdFromRecommendation(sourceData, movieId);
+        const musicIds = extractMusicIdsFromRecommendation(sourceData);
+
+        if (!resolvedMovieId) {
+            setSaveError('Movie ID could not be resolved from recommendation response.');
+            return;
+        }
+
+        if (musicIds.length === 0) {
+            setSaveError('Music IDs could not be resolved from recommendation response.');
+            return;
+        }
+
+        const payload = {
+            userId,
+            playlistName: name,
+            description: playlistDescription.trim() || null,
+            movieId: resolvedMovieId,
+            musicIds,
+            isPublic,
+        };
+
+        try {
+            setSaveLoading(true);
+            setSaveError(null);
+            await api.createPlaylist(payload);
+            setShowSaveModal(false);
+            navigate('/playlists', {
+                state: {
+                    activeTab: 'playlists',
+                    refresh: true,
+                },
+            });
+        } catch (err) {
+            console.error('Save playlist error:', err);
+            setSaveError('Playlist could not be saved. Please try again.');
+        } finally {
+            setSaveLoading(false);
+        }
+    };
+
     return (
         <div className="movie-detail-container">
             {/* Back Button */}
@@ -127,6 +274,17 @@ function MovieDetail() {
 
             {/* Main Title */}
             <h1 className="page-main-title">{movieView?.title || movie?.title || ''}</h1>
+
+            <div className="save-playlist-row">
+                <button
+                    type="button"
+                    className="save-playlist-button"
+                    onClick={openSaveModal}
+                    disabled={loading}
+                >
+                    Save to playlist
+                </button>
+            </div>
 
             {/* Movie Info and Description Section */}
             <div className="movie-mood-section">
@@ -152,7 +310,7 @@ function MovieDetail() {
                         Synopsis
                     </h2>
                     {/* Tag'ler yerine direkt film açıklamasını yazdırıyoruz */}
-                    <div style={{ lineHeight: '1.6', fontSize: '1rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+                    <div style={{ lineHeight: '1.6', fontSize: '1rem' }}>
                         {movieDescription}
                     </div>
                 </div>
@@ -219,6 +377,57 @@ function MovieDetail() {
                     </div>
                 ))}
             </div>
+
+            {showSaveModal && (
+                <div className="save-playlist-modal-overlay" role="presentation" onClick={closeSaveModal}>
+                    <div className="save-playlist-modal" role="dialog" aria-modal="true" aria-label="Save to playlist" onClick={(event) => event.stopPropagation()}>
+                        <h3 className="save-playlist-modal-title">Save to playlist</h3>
+                        <form onSubmit={handleSaveToPlaylist} className="save-playlist-form">
+                            <label className="save-playlist-label" htmlFor="playlist-name-input">Playlist name</label>
+                            <input
+                                id="playlist-name-input"
+                                className="save-playlist-input"
+                                type="text"
+                                value={playlistName}
+                                onChange={(event) => setPlaylistName(event.target.value)}
+                                placeholder="Playlist name"
+                                maxLength={100}
+                            />
+
+                            <label className="save-playlist-label" htmlFor="playlist-description-input">Description</label>
+                            <textarea
+                                id="playlist-description-input"
+                                className="save-playlist-input save-playlist-textarea"
+                                value={playlistDescription}
+                                onChange={(event) => setPlaylistDescription(event.target.value)}
+                                placeholder="Playlist description"
+                                maxLength={500}
+                            />
+
+                            <label className="save-playlist-checkbox-row">
+                                <input
+                                    type="checkbox"
+                                    checked={isPublic}
+                                    onChange={(event) => setIsPublic(event.target.checked)}
+                                />
+                                <span>Public playlist</span>
+                            </label>
+
+                            {saveError && <p className="save-playlist-error">{saveError}</p>}
+
+                            <div className="save-playlist-actions">
+                                <button type="button" className="save-playlist-cancel" onClick={closeSaveModal} disabled={saveLoading}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="save-playlist-submit" disabled={saveLoading}>
+                                    {saveLoading ? 'Saving...' : 'Save'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            
         </div>
     );
 }

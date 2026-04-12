@@ -1,17 +1,21 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Search, Film, User, Settings } from 'lucide-react';
+import { Search, Film, User, Settings, Sun, Moon } from 'lucide-react';
+import { useTheme } from './hooks/useTheme';
 import { CSSTransition } from 'react-transition-group';
 import api from './services/api';
 import './MovieResults.css';
+import './App.css';
+
 
 function MovieResults() {
   const { movieName } = useParams();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState(movieName);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [movies, setMovies] = useState([]);
-  const [songs, setSongs] = useState([]);
+  const [recommendationResponse, setRecommendationResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -68,27 +72,26 @@ function MovieResults() {
                 setLoading(true);
                 setError(null);
 
-                const data = (await api.searchMoviesFromRecommendations?.(movieName))
-                    ?? (await api.searchMovies(movieName));
+          let data = await api.searchMoviesFromRecommendations(movieName);
+
+          if ((!data || (Array.isArray(data) && data.length === 0)) && api.searchMovies) {
+            data = await api.searchMovies(movieName);
+          }
 
                 console.log("Backendden Gelen Tam Veri:", data);
 
-                // BACKENDCİNİN İSTEDİĞİ AYIRMA İŞLEMİ:
+          // Backend response şekline göre filmi ayırıyoruz.
                 if (data && data.movie && data.result) {
-                    // 1. Film bilgisini ayır ve listeye koy (Afişin görünmesi için)
                     setMovies([data.movie]);
-
-                    // 2. Şarkı listesini ayır ve ayrı bir state'e koy (Müzikleri listelemek için)
-                    setSongs(data.result.data || []);
+                  setRecommendationResponse(data);
                 }
-                // Eğer backend eski sistemden (sadece liste) dönerse diye yedek plan (Fallback):
                 else if (Array.isArray(data)) {
                     setMovies(data);
-                    setSongs([]);
+                  setRecommendationResponse(null);
                 }
                 else {
                     setMovies([]);
-                    setSongs([]);
+                  setRecommendationResponse(null);
                 }
 
             } catch (err) {
@@ -130,7 +133,11 @@ function MovieResults() {
   };
 
   const handleMovieClick = (movieTitle) => {
-    navigate(`/movie-detail/0/${encodeURIComponent(movieTitle)}`);
+    navigate(`/movie-detail/0/${encodeURIComponent(movieTitle)}`, {
+      state: {
+        recommendationResponse,
+      },
+    });
   };
 
   return (
@@ -140,7 +147,7 @@ function MovieResults() {
           <div className="results-header-left">
             <button type="button" className="nav-button" onClick={handleLogoClick}>
               <Film size={18} />
-              <span>MovieSearch</span>
+              <span><strong>Ostia</strong></span>
             </button>
           </div>
 
@@ -169,28 +176,35 @@ function MovieResults() {
           </div>
 
           <div className="results-header-right">
+            <button
+
+                            style={{ marginRight: '10px' }}
+                            type="button"
+                            className="nav-button"
+                            onClick={theme.toggleTheme}
+                            aria-label="Toggle theme"
+                            title={theme.theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                        >
+                            {theme.theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                            <span>{theme.theme === 'dark' ? 'Light' : 'Dark'}</span>
+                        </button>
             <div className="profile-menu-wrapper">
               <button className="nav-button" onClick={handleProfileClick} aria-label="Profile menu">
                 <User size={20} />
               </button>
 
-              <CSSTransition
-                in={showProfileMenu}
-                timeout={180}
-                classNames="menu"
-                unmountOnExit
-              >
-                <div className="profile-dropdown">
-                  <button className="nav-button results-navbar-btn--menu" onClick={handleProfileNavigate}>
-                    <User size={18} />
-                    <span>Profile</span>
-                  </button>
-                  <button className="nav-button results-navbar-btn--menu" onClick={handleSettingsNavigate}>
-                    <Settings size={18} />
-                    <span>Settings</span>
-                  </button>
-                </div>
-              </CSSTransition>
+              {showProfileMenu && (
+                                    <div className="profile-dropdown">
+                                        <button className="dropdown-item" onClick={handleProfileNavigate}>
+                                            <User size={18} />
+                                            <span>Profile</span>
+                                        </button>
+                                        <button className="dropdown-item" onClick={handleSettingsNavigate}>
+                                            <Settings size={18} />
+                                            <span>Settings</span>
+                                        </button>
+                                    </div>
+                                )}
             </div>
           </div>
         </div>
