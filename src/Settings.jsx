@@ -1,12 +1,26 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, Lock, Palette, Globe, User, Settings as SettingsIcon } from 'lucide-react';
 import { CSSTransition } from 'react-transition-group';
+import { useAuth } from './context/AuthContext';
 import './Settings.css';
 
 function Settings() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const auth = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  useEffect(() => {
+    if (!auth.loading && !auth.isLoggedIn) {
+      navigate('/login', {
+        replace: true,
+        state: {
+          from: `${location.pathname}${location.search}${location.hash}`,
+        },
+      });
+    }
+  }, [auth.loading, auth.isLoggedIn, location.pathname, location.search, location.hash, navigate]);
 
   const handleProfileClick = () => {
     setShowProfileMenu(!showProfileMenu);

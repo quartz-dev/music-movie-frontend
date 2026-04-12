@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Film, Grid } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
 import api from './services/api';
 import './PageLayout.css';
 import './MoviesByCategory.css';
@@ -17,6 +18,7 @@ function MoviesByCategory() {
   const navigate = useNavigate();
   const location = useLocation();
   const { categoryId } = useParams();
+  const auth = useAuth();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -96,6 +98,22 @@ function MoviesByCategory() {
       .filter((movie) => Boolean(movie.title));
   }, [movies]);
 
+  const handleMovieOpen = (movieTitle) => {
+    if (auth.loading) return;
+
+    if (!auth.isLoggedIn) {
+      const targetRoute = `/movie/${encodeURIComponent(movieTitle ?? '')}`;
+      navigate('/login', {
+        state: {
+          from: targetRoute,
+        },
+      });
+      return;
+    }
+
+    navigate(`/movie/${encodeURIComponent(movieTitle ?? '')}`);
+  };
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -136,7 +154,7 @@ function MoviesByCategory() {
               <article
                 key={movie.id}
                 className="category-movie-card"
-                onClick={() => navigate(`/movie/${movie.title ?? 0}`)}
+                onClick={() => handleMovieOpen(movie.title)}
               >
                 <div className="category-movie-poster">
                   {movie.posterUrl ? (

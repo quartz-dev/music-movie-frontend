@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Film, Search, UserCircle2 } from 'lucide-react';
 import api from './services/api';
 import { useAuth } from './context/AuthContext';
@@ -82,6 +82,7 @@ const formatAddedDate = (value) => {
 
 function PlaylistDetail() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { playlistId } = useParams();
   const auth = useAuth();
   const [trackQuery, setTrackQuery] = useState('');
@@ -90,7 +91,27 @@ function PlaylistDetail() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!auth.loading && !auth.isLoggedIn) {
+      navigate('/login', {
+        replace: true,
+        state: {
+          from: `${location.pathname}${location.search}${location.hash}`,
+        },
+      });
+    }
+  }, [auth.loading, auth.isLoggedIn, location.pathname, location.search, location.hash, navigate]);
+
+  useEffect(() => {
     let ignore = false;
+
+    if (auth.loading) return;
+
+    if (!auth.isLoggedIn) {
+      setPlaylists([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
 
     (async () => {
       try {
@@ -122,7 +143,7 @@ function PlaylistDetail() {
     return () => {
       ignore = true;
     };
-  }, [auth?.user?.id, auth?.user?.userId]);
+  }, [auth.loading, auth.isLoggedIn, auth?.user?.id, auth?.user?.userId]);
 
   const playlist = useMemo(() => playlists.find((p) => String(p.id) === String(playlistId)) ?? null, [playlists, playlistId]);
   const tracks = playlist?.tracks ?? [];

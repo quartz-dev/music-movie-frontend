@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Mail, Calendar, Film, Music, Clock, Sparkles, Settings } from 'lucide-react';
-import { CSSTransition } from 'react-transition-group';
+import { ArrowLeft, User, Mail, Calendar, Film, Music, Clock, Sparkles } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import api from './services/api';
 import './Profile.css';
@@ -80,7 +79,6 @@ const formatRelativeDate = (value) => {
 
 function Profile() {
   const navigate = useNavigate();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -89,17 +87,39 @@ function Profile() {
 
   const userData = auth.user;
 
-  const handleProfileClick = () => {
-    setShowProfileMenu(!showProfileMenu);
-  };
-
-  const handleSettingsNavigate = () => {
-    navigate('/settings');
-    setShowProfileMenu(false);
-  };
+  useEffect(() => {
+    if (!auth.loading && !auth.isLoggedIn) {
+      navigate('/login', {
+        replace: true,
+        state: {
+          from: '/profile',
+        },
+      });
+    }
+  }, [auth.loading, auth.isLoggedIn, navigate]);
 
   useEffect(() => {
     let ignore = false;
+
+    if (auth.loading) return;
+
+    if (!auth.isLoggedIn) {
+      setRecentSearches([]);
+      setPlaylists([]);
+      setDataError(null);
+      setDataLoading(false);
+      return;
+    }
+
+    const userId = auth?.user?.id ?? auth?.user?.userId ?? null;
+
+    if (!userId) {
+      setRecentSearches([]);
+      setPlaylists([]);
+      setDataError('Profile data could not be loaded.');
+      setDataLoading(false);
+      return;
+    }
 
     (async () => {
       try {
@@ -107,8 +127,8 @@ function Profile() {
         setDataError(null);
 
         const [recentResponse, playlistsResponse] = await Promise.all([
-          api.getUserRecentSearches?.(),
-          api.getUserPlaylists?.(auth?.user?.id ?? auth?.user?.userId ?? null, true),
+          api.getUserRecentSearches(),
+          api.getUserPlaylists(userId, true),
         ]);
 
         if (ignore) return;
@@ -130,9 +150,7 @@ function Profile() {
     return () => {
       ignore = true;
     };
-  }, [auth?.user?.id, auth?.user?.userId]);
-
-  const totalSongs = useMemo(() => playlists.reduce((sum, playlist) => sum + (playlist.songCount ?? 0), 0), [playlists]);
+  }, [auth.loading, auth.isLoggedIn, auth?.user?.id, auth?.user?.userId]);
 
   return (
     <div className="profile-container">

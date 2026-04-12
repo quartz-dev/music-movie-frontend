@@ -84,6 +84,7 @@ export function AuthProvider({ children }) {
             // Backend'deki endpoint cookie'yi geçersiz kılacak (clear-cookie) işlemi yapar.
             await api.logout();
         } finally {
+            api.clearClientCaches?.();
             // Çıkış yapıldıktan sonra user'ı sıfırlıyoruz. (localStorage silmemize gerek kalmadı)
             setUser(null);
         }

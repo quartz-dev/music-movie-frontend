@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Music } from 'lucide-react';
+import { ArrowLeft, Play, Music, RefreshCw } from 'lucide-react';
 import api from './services/api';
 import { useAuth } from './context/AuthContext';
 import './MovieDetail.css';
+
+const REFRESH_COOLDOWN_SECONDS = 30;
 
 const extractSongsFromRecommendation = (data) => {
     const songs =
@@ -45,13 +47,37 @@ const extractMusicIdsFromRecommendation = (data) => {
         .filter((id) => id != null && id !== '');
 };
 
+const normalizeUserPlaylists = (payload) => {
+    const list =
+        (Array.isArray(payload) ? payload : null) ??
+        (Array.isArray(payload?.data) ? payload.data : null) ??
+        (Array.isArray(payload?.Data) ? payload.Data : null) ??
+        (Array.isArray(payload?.result?.data) ? payload.result.data : null) ??
+        (Array.isArray(payload?.Result?.Data) ? payload.Result.Data : null) ??
+        (Array.isArray(payload?.items) ? payload.items : null) ??
+        [];
+
+    return list
+        .map((item, index) => {
+            const movie = item?.movie ?? item?.Movie ?? null;
+            return {
+                id: item?.id ?? item?.Id ?? item?.playlistId ?? item?.PlaylistId ?? item?.playlistID ?? `playlist-${index}`,
+                name: item?.playlistName ?? item?.PlaylistName ?? item?.name ?? item?.Name ?? 'Untitled playlist',
+                movieId: movie?.id ?? movie?.Id ?? movie?.movieId ?? movie?.MovieId ?? item?.movieId ?? item?.MovieId ?? null,
+                isDeleted: Boolean(item?.isDeleted ?? item?.IsDeleted),
+            };
+        })
+        .filter((playlist) => !playlist.isDeleted);
+};
+
 function MovieDetail() {
-    const { movieId, movieTitle } = useParams();
+    const { movieId, movieTitle, movieName } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
     const auth = useAuth();
 
-    const titleDecoded = decodeURIComponent(movieTitle || '');
+    const routeMovieTitle = movieTitle ?? movieName ?? '';
+    const titleDecoded = decodeURIComponent(routeMovieTitle || '');
 
     const toPosterUrl = (raw) => {
         if (!raw) return null;
@@ -80,6 +106,23 @@ function MovieDetail() {
     const [isPublic, setIsPublic] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
     const [saveError, setSaveError] = useState(null);
+    const [refreshCooldown, setRefreshCooldown] = useState(0);
+    const [saveMode, setSaveMode] = useState('new');
+    const [existingPlaylists, setExistingPlaylists] = useState([]);
+    const [existingPlaylistsLoading, setExistingPlaylistsLoading] = useState(false);
+    const [existingPlaylistsError, setExistingPlaylistsError] = useState(null);
+    const [selectedExistingPlaylistId, setSelectedExistingPlaylistId] = useState('');
+
+    useEffect(() => {
+        if (!auth.loading && !auth.isLoggedIn) {
+            navigate('/login', {
+                replace: true,
+                state: {
+                    from: `${location.pathname}${location.search}${location.hash}`,
+                },
+            });
+        }
+    }, [auth.loading, auth.isLoggedIn, location.pathname, location.search, location.hash, navigate]);
 
     const applyRecommendationData = (data) => {
         setRecommendationData(data ?? null);
@@ -120,7 +163,7 @@ function MovieDetail() {
                 setError(null);
 
                 if (preloadedResponse) {
-                    const decodedTitle = decodeURIComponent(movieTitle || '');
+                    const decodedTitle = decodeURIComponent(routeMovieTitle || '');
                     if (decodedTitle) {
                         api.cacheRecommendationResponse?.(`recommendations:${decodedTitle}`, preloadedResponse);
                     }
@@ -130,7 +173,7 @@ function MovieDetail() {
                     return;
                 }
 
-                const decodedTitle = decodeURIComponent(movieTitle || '');
+                const decodedTitle = decodeURIComponent(routeMovieTitle || '');
                 const cachedResponse = api.getCachedRecommendationResponse?.(`recommendations:${decodedTitle}`);
                 if (cachedResponse) {
                     if (ignore) return;
@@ -163,7 +206,19 @@ function MovieDetail() {
         return () => {
             ignore = true;
         };
-    }, [location.state, movieId, movieTitle]);
+    }, [location.state, movieId, routeMovieTitle]);
+
+    useEffect(() => {
+        if (refreshCooldown <= 0) return;
+
+        const timeoutId = window.setTimeout(() => {
+            setRefreshCooldown((prev) => Math.max(prev - 1, 0));
+        }, 1000);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [refreshCooldown]);
 
     const normalizedSongs = useMemo(() => {
         return (Array.isArray(songRecommendations) ? songRecommendations : []).map((s) => ({
@@ -182,34 +237,7 @@ function MovieDetail() {
         posterUrl: posterUrl ?? movie.posterUrl,
     }), [movie, posterUrl]);
 
-    const openSaveModal = () => {
-        setPlaylistName((movieView?.title || titleDecoded || 'My Playlist').trim() ? `${(movieView?.title || titleDecoded || 'My Playlist').trim()} Playlist` : 'My Playlist');
-        setPlaylistDescription(movieDescription || '');
-        setIsPublic(false);
-        setSaveError(null);
-        setShowSaveModal(true);
-    };
-
-    const closeSaveModal = () => {
-        if (saveLoading) return;
-        setShowSaveModal(false);
-    };
-
-    const handleSaveToPlaylist = async (e) => {
-        e.preventDefault();
-        const name = playlistName.trim();
-
-        if (!name) {
-            setSaveError('Playlist name is required.');
-            return;
-        }
-
-        const userId = auth?.user?.id ?? auth?.user?.userId ?? null;
-        if (!userId) {
-            setSaveError('Please log in to save playlists.');
-            return;
-        }
-
+    const resolveRecommendationSourceData = async () => {
         let sourceData = recommendationData ?? api.getCachedRecommendationResponse?.(`recommendations:${titleDecoded}`) ?? null;
 
         if (!extractMovieFromRecommendation(sourceData) || extractSongsFromRecommendation(sourceData).length === 0) {
@@ -222,6 +250,101 @@ function MovieDetail() {
                 // Keep existing sourceData and fallback model below
             }
         }
+
+        return sourceData;
+    };
+
+    const openSaveModal = async () => {
+        setPlaylistName((movieView?.title || titleDecoded || 'My Playlist').trim() ? `${(movieView?.title || titleDecoded || 'My Playlist').trim()} Playlist` : 'My Playlist');
+        setPlaylistDescription(movieDescription || '');
+        setIsPublic(false);
+        setSaveMode('new');
+        setExistingPlaylists([]);
+        setExistingPlaylistsError(null);
+        setSelectedExistingPlaylistId('');
+        setSaveError(null);
+        setShowSaveModal(true);
+
+        const userId = auth?.user?.id ?? auth?.user?.userId ?? null;
+        if (!userId) return;
+
+        try {
+            setExistingPlaylistsLoading(true);
+            const sourceData = await resolveRecommendationSourceData();
+            const resolvedMovieId = extractMovieIdFromRecommendation(sourceData, movieId);
+
+            if (!resolvedMovieId) {
+                setExistingPlaylists([]);
+                return;
+            }
+
+            const playlistsResponse = await api.getUserPlaylists(userId, true);
+            const playlists = normalizeUserPlaylists(playlistsResponse);
+            const matched = playlists.filter((playlist) => {
+                return String(playlist.movieId ?? '').toLowerCase() === String(resolvedMovieId).toLowerCase();
+            });
+
+            setExistingPlaylists(matched);
+            setSelectedExistingPlaylistId(matched.length > 0 ? String(matched[0].id) : '');
+        } catch (err) {
+            console.error('Existing playlists fetch error:', err);
+            setExistingPlaylists([]);
+            setExistingPlaylistsError('Existing playlists could not be loaded right now.');
+        } finally {
+            setExistingPlaylistsLoading(false);
+        }
+    };
+
+    const closeSaveModal = () => {
+        if (saveLoading) return;
+        setShowSaveModal(false);
+    };
+
+    const handleRefreshMusics = async () => {
+        if (refreshCooldown > 0) return;
+
+        try {
+            setLoading(true);
+            setError(null);
+            setRefreshCooldown(REFRESH_COOLDOWN_SECONDS);
+
+            const decodedTitle = decodeURIComponent(routeMovieTitle || '');
+            const res =
+                (decodedTitle ? await api.searchMoviesFromRecommendations(decodedTitle) : null) ??
+                (movieId ? await api.getMovieMoodAndSongs(movieId) : null);
+
+            const data = res?.data ?? res;
+            applyRecommendationData(data);
+        } catch (err) {
+            console.error('Refresh recommendations error:', err);
+            setError('Failed to refresh recommendations. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveToPlaylist = async (e) => {
+        e.preventDefault();
+        const name = playlistName.trim();
+        const isAddingToExisting = saveMode === 'existing';
+
+        if (!isAddingToExisting && !name) {
+            setSaveError('Playlist name is required.');
+            return;
+        }
+
+        if (isAddingToExisting && !selectedExistingPlaylistId) {
+            setSaveError('Please select an existing playlist.');
+            return;
+        }
+
+        const userId = auth?.user?.id ?? auth?.user?.userId ?? null;
+        if (!userId) {
+            setSaveError('Please log in to save playlists.');
+            return;
+        }
+
+        const sourceData = await resolveRecommendationSourceData();
 
         const resolvedMovieId = extractMovieIdFromRecommendation(sourceData, movieId);
         const musicIds = extractMusicIdsFromRecommendation(sourceData);
@@ -236,19 +359,31 @@ function MovieDetail() {
             return;
         }
 
-        const payload = {
-            userId,
-            playlistName: name,
-            description: playlistDescription.trim() || null,
-            movieId: resolvedMovieId,
-            musicIds,
-            isPublic,
-        };
-
         try {
             setSaveLoading(true);
             setSaveError(null);
-            await api.createPlaylist(payload);
+
+            if (isAddingToExisting) {
+                const selectedPlaylist = existingPlaylists.find((playlist) => String(playlist.id) === String(selectedExistingPlaylistId));
+                const payload = {
+                    userId,
+                    playlistName: selectedPlaylist?.name ?? name ?? `${titleDecoded || 'Playlist'} Playlist`,
+                    movieId: resolvedMovieId,
+                    musicIds,
+                };
+                await api.addToExistingPlaylist(selectedExistingPlaylistId, payload);
+            } else {
+                const payload = {
+                    userId,
+                    playlistName: name,
+                    description: playlistDescription.trim() || null,
+                    movieId: resolvedMovieId,
+                    musicIds,
+                    isPublic,
+                };
+                await api.createPlaylist(payload);
+            }
+
             setShowSaveModal(false);
             navigate('/playlists', {
                 state: {
@@ -258,7 +393,7 @@ function MovieDetail() {
             });
         } catch (err) {
             console.error('Save playlist error:', err);
-            setSaveError('Playlist could not be saved. Please try again.');
+            setSaveError(isAddingToExisting ? 'Musics could not be added to existing playlist. Please try again.' : 'Playlist could not be saved. Please try again.');
         } finally {
             setSaveLoading(false);
         }
@@ -266,25 +401,23 @@ function MovieDetail() {
 
     return (
         <div className="movie-detail-container">
+            {loading && (
+                <div className="movie-detail-loading-overlay" role="status" aria-live="polite" aria-label="Loading movie details">
+                    <div className="movie-detail-loading-popup">
+                        <div className="movie-detail-loading-spinner" />
+                        <p className="movie-detail-loading-text">Loading recommendations...</p>
+                    </div>
+                </div>
+            )}
+
             {/* Back Button */}
             <button onClick={() => navigate(-1)} className="back-button-detail">
                 <ArrowLeft size={20} />
-                Back to Results
+                Back
             </button>
 
             {/* Main Title */}
             <h1 className="page-main-title">{movieView?.title || movie?.title || ''}</h1>
-
-            <div className="save-playlist-row">
-                <button
-                    type="button"
-                    className="save-playlist-button"
-                    onClick={openSaveModal}
-                    disabled={loading}
-                >
-                    Save to playlist
-                </button>
-            </div>
 
             {/* Movie Info and Description Section */}
             <div className="movie-mood-section">
@@ -297,7 +430,7 @@ function MovieDetail() {
                             <>
                                 <Music size={100} />
                                 <p className="poster-movie-title">
-                                    {movieView?.title || decodeURIComponent(movieTitle)}
+                                    {movieView?.title || decodeURIComponent(routeMovieTitle)}
                                 </p>
                             </>
                         )}
@@ -319,11 +452,38 @@ function MovieDetail() {
             {/* Song Recommendations Title */}
             <h2 className="recommendations-title">Recommended songs</h2>
 
-            {loading && (
-                <div className="results-state">
-                    <p>Loading recommendations...</p>
+            <div className="recommendations-actions-row">
+                <div className="refresh-musics-group">
+                    <button
+                        type="button"
+                        className="refresh-musics-button"
+                        onClick={handleRefreshMusics}
+                        disabled={loading || refreshCooldown > 0}
+                    >
+                        <RefreshCw size={16} />
+                        {refreshCooldown > 0 ? `Refresh musics (${refreshCooldown}s)` : 'Refresh musics'}
+                    </button>
+                    <button
+                        type="button"
+                        className="cooldown-help-button"
+                        aria-label="Refresh cooldown info"
+                        title="Our recommendation APIs require a 30-second cooldown between refresh requests to protect service limits."
+                    >
+                        ?
+                    </button>
+                    <div className="cooldown-help-tooltip" role="note">
+                        Our recommendation APIs require a 30-second cooldown between refresh requests to protect service limits.
+                    </div>
                 </div>
-            )}
+                <button
+                    type="button"
+                    className="save-playlist-button"
+                    onClick={openSaveModal}
+                    disabled={loading}
+                >
+                    Save to playlist
+                </button>
+            </div>
 
             {!loading && error && (
                 <div className="results-state">
@@ -383,35 +543,86 @@ function MovieDetail() {
                     <div className="save-playlist-modal" role="dialog" aria-modal="true" aria-label="Save to playlist" onClick={(event) => event.stopPropagation()}>
                         <h3 className="save-playlist-modal-title">Save to playlist</h3>
                         <form onSubmit={handleSaveToPlaylist} className="save-playlist-form">
-                            <label className="save-playlist-label" htmlFor="playlist-name-input">Playlist name</label>
-                            <input
-                                id="playlist-name-input"
-                                className="save-playlist-input"
-                                type="text"
-                                value={playlistName}
-                                onChange={(event) => setPlaylistName(event.target.value)}
-                                placeholder="Playlist name"
-                                maxLength={100}
-                            />
+                            <div className="save-playlist-mode-group">
+                                <label className="save-playlist-mode-option">
+                                    <input
+                                        type="radio"
+                                        name="save-mode"
+                                        value="new"
+                                        checked={saveMode === 'new'}
+                                        onChange={() => setSaveMode('new')}
+                                    />
+                                    <span>Create new playlist</span>
+                                </label>
+                                <label className="save-playlist-mode-option">
+                                    <input
+                                        type="radio"
+                                        name="save-mode"
+                                        value="existing"
+                                        checked={saveMode === 'existing'}
+                                        disabled={existingPlaylistsLoading || existingPlaylists.length === 0}
+                                        onChange={() => setSaveMode('existing')}
+                                    />
+                                    <span>Add to existing playlist (same movie)</span>
+                                </label>
+                                {existingPlaylistsLoading && <p className="save-playlist-hint">Checking your existing playlists...</p>}
+                                {!existingPlaylistsLoading && existingPlaylistsError && <p className="save-playlist-hint">{existingPlaylistsError}</p>}
+                                {!existingPlaylistsLoading && !existingPlaylistsError && existingPlaylists.length === 0 && (
+                                    <p className="save-playlist-hint">No existing playlists found for this movie.</p>
+                                )}
+                            </div>
 
-                            <label className="save-playlist-label" htmlFor="playlist-description-input">Description</label>
-                            <textarea
-                                id="playlist-description-input"
-                                className="save-playlist-input save-playlist-textarea"
-                                value={playlistDescription}
-                                onChange={(event) => setPlaylistDescription(event.target.value)}
-                                placeholder="Playlist description"
-                                maxLength={500}
-                            />
+                            {saveMode === 'existing' && existingPlaylists.length > 0 && (
+                                <>
+                                    <label className="save-playlist-label" htmlFor="existing-playlist-select">Select playlist</label>
+                                    <select
+                                        id="existing-playlist-select"
+                                        className="save-playlist-input"
+                                        value={selectedExistingPlaylistId}
+                                        onChange={(event) => setSelectedExistingPlaylistId(event.target.value)}
+                                    >
+                                        {existingPlaylists.map((playlist) => (
+                                            <option key={playlist.id} value={playlist.id}>
+                                                {playlist.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </>
+                            )}
 
-                            <label className="save-playlist-checkbox-row">
-                                <input
-                                    type="checkbox"
-                                    checked={isPublic}
-                                    onChange={(event) => setIsPublic(event.target.checked)}
-                                />
-                                <span>Public playlist</span>
-                            </label>
+                            {saveMode === 'new' && (
+                                <>
+                                    <label className="save-playlist-label" htmlFor="playlist-name-input">Playlist name</label>
+                                    <input
+                                        id="playlist-name-input"
+                                        className="save-playlist-input"
+                                        type="text"
+                                        value={playlistName}
+                                        onChange={(event) => setPlaylistName(event.target.value)}
+                                        placeholder="Playlist name"
+                                        maxLength={100}
+                                    />
+
+                                    <label className="save-playlist-label" htmlFor="playlist-description-input">Description</label>
+                                    <textarea
+                                        id="playlist-description-input"
+                                        className="save-playlist-input save-playlist-textarea"
+                                        value={playlistDescription}
+                                        onChange={(event) => setPlaylistDescription(event.target.value)}
+                                        placeholder="Playlist description"
+                                        maxLength={500}
+                                    />
+
+                                    <label className="save-playlist-checkbox-row">
+                                        <input
+                                            type="checkbox"
+                                            checked={isPublic}
+                                            onChange={(event) => setIsPublic(event.target.checked)}
+                                        />
+                                        <span>Public playlist</span>
+                                    </label>
+                                </>
+                            )}
 
                             {saveError && <p className="save-playlist-error">{saveError}</p>}
 
@@ -420,7 +631,7 @@ function MovieDetail() {
                                     Cancel
                                 </button>
                                 <button type="submit" className="save-playlist-submit" disabled={saveLoading}>
-                                    {saveLoading ? 'Saving...' : 'Save'}
+                                    {saveLoading ? 'Saving...' : saveMode === 'existing' ? 'Add musics' : 'Save'}
                                 </button>
                             </div>
                         </form>

@@ -132,13 +132,13 @@ function Home() {
     const handleSearch = (e) => {
         e.preventDefault();
         if (query.trim()) {
-            navigate(`/movie/${query}`);
+            navigate(`/movie/${encodeURIComponent(query.trim())}`);
         }
     };
 
     const handleSearchClick = () => {
         if (query.trim()) {
-            navigate(`/movie/${query}`);
+            navigate(`/movie/${encodeURIComponent(query.trim())}`);
         }
     };
 
